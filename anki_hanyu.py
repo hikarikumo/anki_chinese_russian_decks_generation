@@ -407,10 +407,10 @@ def check_input_duplicates(input_file):
     words = []
     for file in files:
         with open(f"input_words_archive/{file}", "r", encoding="utf-8") as f:
-            words += [line.strip().replace('\u200b', '') for line in f if line.strip()]
+            words += [line.strip().replace("\u200b", "") for line in f if line.strip()]
     # read input_words
     with open(input_file, "r", encoding="utf-8") as f:
-        input_words = [line.strip().replace('\u200b', '') for line in f if line.strip()]
+        input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
     for word in input_words:
         is_chinese_char(word)
         if not is_chinese_char(word):
@@ -432,14 +432,14 @@ def is_chinese_char(text):
     """
     Check if all characters in the input text are Chinese characters (汉字).
     Returns True if all characters are Chinese, False if any character is not.
-    
+
     Uses Unicode ranges:
     - CJK Unified Ideographs: U+4E00 - U+9FFF (basic Chinese characters)
     - CJK Unified Ideographs Extension A: U+3400 - U+4DBF (less common)
     """
     if not text or len(text) == 0:  # Handle empty input
         return False
-    
+
     for char in text:
         code_point = ord(char)
         # Check if character is outside both Unicode ranges
