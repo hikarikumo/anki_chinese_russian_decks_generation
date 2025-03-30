@@ -354,15 +354,10 @@ class ChineseAnkiGenerator:
             "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
         }
 
-    def create_deck_from_file(self, input_file, output_file="vova_chinese_hsk1.apkg"):
-        """Create Anki deck from a file containing Chinese words"""
-        with open(input_file, "r", encoding="utf-8") as f:
-            words = [line.strip() for line in f if line.strip()]
-
-        print(f"Found {len(words)} words to process")
+    def create_deck_from_file(self, input_words, output_file="vova_chinese_hsk1.apkg"):
+        """Create Anki deck from Chinese words"""
         results = []
-
-        for word in words:
+        for word in input_words:
             result = self.process_word(word)
             results.append(result)
 
@@ -403,7 +398,55 @@ async def google_translate(word):
         return meaning.capitalize()
 
 
-# Usage example
+def check_input_duplicates(input_file):
+    """Check if input_words contains duplicates"""
+    # read all files in input_words_archive
+    new_input_words = []
+    files = os.listdir("input_words_archive")
+    words = []
+    for file in files:
+        with open(f"input_words_archive/{file}", "r", encoding="utf-8") as f:
+            words += [line.strip().replace('\u200b', '') for line in f if line.strip()]
+    # read input_words
+    with open(input_file, "r", encoding="utf-8") as f:
+        input_words = [line.strip().replace('\u200b', '') for line in f if line.strip()]
+    for word in input_words:
+        is_chinese_char(word)
+        if not is_chinese_char(word):
+            raise ValueError(f"Invalid Chinese character: {word}")
+        if word in words:
+            print(f"Duplicate word: {word}")
+        else:
+            new_input_words.append(word)
+
+    print(f"Removed {len(input_words) - len(new_input_words)} duplicates")
+    print(f"Found {len(new_input_words)} words to process")
+    with open(input_file, "w", encoding="utf-8") as f:
+        for word in new_input_words:
+            f.write(f"{word}\n")
+    return new_input_words
+
+
+def is_chinese_char(text):
+    """
+    Check if all characters in the input text are Chinese characters (汉字).
+    Returns True if all characters are Chinese, False if any character is not.
+    
+    Uses Unicode ranges:
+    - CJK Unified Ideographs: U+4E00 - U+9FFF (basic Chinese characters)
+    - CJK Unified Ideographs Extension A: U+3400 - U+4DBF (less common)
+    """
+    if not text or len(text) == 0:  # Handle empty input
+        return False
+    
+    for char in text:
+        code_point = ord(char)
+        # Check if character is outside both Unicode ranges
+        if not ((0x4E00 <= code_point <= 0x9FFF) or (0x3400 <= code_point <= 0x4DBF)):
+            return False
+    return True
+
+
 if __name__ == "__main__":
     generator = ChineseAnkiGenerator()
 
@@ -416,8 +459,10 @@ if __name__ == "__main__":
             f.write("你好\n")
         print(f"Created example file: {input_file}")
 
+    # check if input_words contains duplicates
+    checked_input_words = check_input_duplicates(input_file)
     # Process the file
-    results = generator.create_deck_from_file(input_file)
+    results = generator.create_deck_from_file(checked_input_words)
 
     # Display results
     print("\nProcessed words:")
