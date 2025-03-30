@@ -238,11 +238,12 @@ class ChineseAnkiGenerator:
 
     def get_audio_from_forvo(self, word):
         """Get audio pronunciation from Forvo API"""
-        audio_file_path = "forvo_audio"
-        if not os.path.exists(audio_file_path):
-            os.makedirs(audio_file_path)
-        if os.path.exists(f"{audio_file_path}/{word}_audio.mp3"):
-            return f"{word}_audio.mp3"
+        audio_dir = "forvo_audio"
+        if not os.path.exists(audio_dir):
+            os.makedirs(audio_dir)
+        audio_file_path = f"{audio_dir}/{word}_audio.mp3"
+        if os.path.exists(audio_file_path):
+            return audio_file_path
         try:
             # Encode the word for URL
             encoded_word = urllib.parse.quote(word)
@@ -272,7 +273,7 @@ class ChineseAnkiGenerator:
 
                     # Create a suitable filename
 
-                    audio_filename = f"{audio_file_path}/{word}_audio.mp3"
+                    audio_filename = audio_file_path
 
                     # Download the audio file
                     audio_response = requests.get(audio_url)
@@ -321,12 +322,12 @@ class ChineseAnkiGenerator:
         example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
         example_colored_pinyin = self.color_pinyin(example_pinyin_text)
 
-        # Get audio (optional)
         audio_file = self.get_audio_from_forvo(word)
-        audio_tag = f"[sound:{audio_file}]" if audio_file else ""
-
         if audio_file and os.path.exists(audio_file):
-            self.media_files.append(audio_file)
+            # Use only the basename for the [sound:…] tag
+            audio_filename = os.path.basename(audio_file)  # e.g., "你好_audio.mp3"
+            audio_tag = f"[sound:{audio_filename}]"
+            self.media_files.append(audio_file)  # Full path for media_files
 
         # Create Anki note
         note = genanki.Note(
