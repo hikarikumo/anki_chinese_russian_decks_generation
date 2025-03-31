@@ -313,15 +313,20 @@ class ChineseAnkiGenerator:
         meaning = self.get_dictionary_data(word)
 
         # Get example sentence
-        example = self.get_example_from_tatoeba(word)
-        example_chinese = example["chinese"]
-        example_meaning = example["meaning"]
+        try:
+            example = self.get_example_from_tatoeba(word)
+            example_chinese = example["chinese"]
+            example_meaning = example["meaning"]
 
-        # Get example pinyin
-        example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)
-        example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
-        example_colored_pinyin = self.color_pinyin(example_pinyin_text)
-
+            # Get example pinyin
+            example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)
+            example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
+            example_colored_pinyin = self.color_pinyin(example_pinyin_text)
+        except Exception as e:
+            print(f"Error fetching example: {e}")
+            example_chinese = ""
+            example_colored_pinyin = ""
+            example_meaning = ""
         audio_file = self.get_audio_from_forvo(word)
         if audio_file and os.path.exists(audio_file):
             # Use only the basename for the [sound:…] tag
