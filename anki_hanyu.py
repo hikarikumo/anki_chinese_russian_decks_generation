@@ -425,6 +425,7 @@ def check_input_duplicates(input_file):
         else:
             new_input_words.append(word)
 
+    print(f"Found {len(words)} words in archive")
     print(f"Removed {len(input_words) - len(new_input_words)} duplicates")
     print(f"Found {len(new_input_words)} words to process")
     with open(input_file, "w", encoding="utf-8") as f:
