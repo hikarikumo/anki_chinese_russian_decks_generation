@@ -9,12 +9,15 @@ from googletrans import Translator
 import asyncio
 from datetime import datetime
 
+output_deck = "vova_chinese_hsk1.apkg"
+
 
 class ChineseAnkiGenerator:
     def __init__(self):
         # Create Anki model
         self.model = genanki.Model(
             random.randrange(1 << 30, 1 << 31),
+            # "Meiling words",
             "Vova chinese HSK1",
             fields=[
                 {"name": "Chinese"},
@@ -101,6 +104,7 @@ class ChineseAnkiGenerator:
 
         # Create deck
         self.deck = genanki.Deck(
+            # random.randrange(1 << 30, 1 << 31), "Meiling words"
             random.randrange(1 << 30, 1 << 31), "Vova chinese HSK1"
         )
 
@@ -360,7 +364,7 @@ class ChineseAnkiGenerator:
             "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
         }
 
-    def create_deck_from_file(self, input_words, output_file="vova_chinese_hsk1.apkg"):
+    def create_deck_from_file(self, input_words, output_file=output_deck):
         """Create Anki deck from Chinese words"""
         results = []
         for word in input_words:
@@ -416,6 +420,7 @@ def check_input_duplicates(input_file):
     # read input_words
     with open(input_file, "r", encoding="utf-8") as f:
         input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
+    input_words = list(set(input_words))
     for word in input_words:
         is_chinese_char(word)
         if not is_chinese_char(word):
@@ -459,6 +464,7 @@ if __name__ == "__main__":
 
     # Example usage with a file
     input_file = "chinese_words.txt"
+    output_deck = "vova_chinese_hsk1.apkg"
 
     # Create example file if it doesn't exist
     if not os.path.exists(input_file):
