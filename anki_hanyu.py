@@ -8,6 +8,7 @@ import requests
 from googletrans import Translator
 import asyncio
 from datetime import datetime
+from hanziconv import HanziConv
 
 output_deck = "vova_chinese_hsk1.apkg"
 
@@ -189,9 +190,10 @@ class ChineseAnkiGenerator:
                 return "Unable to fetch definition"
 
     def get_example_from_tatoeba(self, word):
-        lang = "cmn"
-        translation_lang = "eng"
-        url = f"https://tatoeba.org/eng/api_v0/search?from={lang}&to={translation_lang}&query={word}&sort=relevance&word_count_max=&word_count_min=1"
+        """Get example sentences from Tatoeba, ensuring Simplified Chinese"""
+        lang = "cmn"  # Mandarin Chinese
+        translation_lang = "eng"  # English translation
+        url = f"https://tatoeba.org/eng/api_v0/search?from={lang}&to={translation_lang}&query={word}&sort=relevance&word_count_min=1"
 
         try:
             response = requests.get(url, timeout=10)
@@ -206,9 +208,11 @@ class ChineseAnkiGenerator:
                 if not all(key in item for key in ["text", "translations"]):
                     continue
 
+                # Преобразуем текст в упрощенные иероглифы
+                chinese_text = HanziConv.toSimplified(item["text"])
+
                 # Безопасное извлечение перевода
                 if item["translations"]:  # Есть ли переводы вообще
-                    # Берем первый перевод (проверяя его структуру)
                     first_translation = (
                         item["translations"][0] if item["translations"] else None
                     )
@@ -225,10 +229,10 @@ class ChineseAnkiGenerator:
                         translation_text = ""
 
                     if translation_text.strip():
-                        return {"chinese": item["text"], "meaning": translation_text}
+                        return {"chinese": chinese_text, "meaning": translation_text}
 
-            # Если ничего не нашли
-            return None
+                # Если ничего не нашли с переводом
+                return None
 
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
@@ -239,7 +243,7 @@ class ChineseAnkiGenerator:
         except Exception as e:
             print(f"Unexpected error: {e}")
             return None
-
+        
     def get_audio_from_forvo(self, word):
         """Get audio pronunciation from Forvo API"""
         audio_dir = "forvo_audio"
@@ -418,6 +422,9 @@ def check_input_duplicates(input_file):
         with open(f"input_words_archive/{file}", "r", encoding="utf-8") as f:
             words += [line.strip().replace("\u200b", "") for line in f if line.strip()]
     # read input_words
+    # with open("all_archive_words.txt", "w", encoding="utf-8") as f:
+    #     for word in words:
+    #         f.write(f"{word}\n")
     with open(input_file, "r", encoding="utf-8") as f:
         input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
     input_words = list(set(input_words))
