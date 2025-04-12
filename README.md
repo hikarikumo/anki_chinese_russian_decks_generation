@@ -57,7 +57,7 @@
 
 ### Пример
 
-[Пример карточки Anki mobile](Anki mobile example with HMM.png)
+![Пример карточки Anki mobile](Anki mobile example with HMM.png)
 
 ### Общие особенности
 
