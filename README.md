@@ -91,22 +91,22 @@
 
 1. **Склонируйте репозиторий или скачайте скрипты**:
 
-```   git clone https://github.com/hikarikumo/anki_hanyu_decks_generation
-   cd anki_hanyu_decks_generation```
+   git clone https://github.com/hikarikumo/anki_hanyu_decks_generation
+   cd anki_hanyu_decks_generation
 
     Создайте файл .venv в корне проекта:
 
-```    python3 -m venv .venv```
+    python3 -m venv .venv
 
     Установите зависимости:
 
-```    pip install -r requirements.txt```
+    pip install -r requirements.txt
 
-```    pip install genanki pypinyin hanziconv requests python-dotenv googletrans>=4.0.0-rc1```
+    pip install genanki pypinyin hanziconv requests python-dotenv googletrans>=4.0.0-rc1
 
     Для hanzi_movie_method.py дополнительно:
 
-```    pip install openai```
+    pip install openai
 
     Настройте ключи API:
 
@@ -133,7 +133,7 @@
 
     Запустите скрипт:
 
-```    python hanzi_movie_method.py```
+    python hanzi_movie_method.py
 
     Что произойдёт:
 
@@ -165,7 +165,7 @@
 
         Запустите скрипт:
 
-````    python3 anki_hanyu.py````
+    python3 anki_hanyu.py
 
     Что произойдёт:
 
