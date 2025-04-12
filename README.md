@@ -1,6 +1,7 @@
 # Chinese Anki Deck Generators
 
 Этот проект включает два Python-скрипта для создания Anki-колод, упрощающих изучение китайского языка:
+
 1. **Hanzi Movie Method Deck Generator** (`hanzi_movie_method.py`): Создаёт карточки для отдельных китайских иероглифов с мнемоническими историями по методу Hanzi Movie Method, вдохновлённому [Mandarin Blueprint](https://www.mandarinblueprint.com/). Использует OpenAI API для генерации историй и Forvo API для аудио.
 2. **Words and Phrases Deck Generator** (`tatoeba_examples.py`): Создаёт карточки для китайских фраз и словосочетаний с примерами предложений из базы [Tatoeba](https://tatoeba.org/). Использует Forvo API для аудио, без OpenAI API.
 
@@ -9,6 +10,7 @@
 ## Особенности
 
 ### Hanzi Movie Method Deck Generator
+
 - **Мнемонические истории**: Генерирует яркие, абсурдные истории для отдельных иероглифов по методу Hanzi Movie Method ([Mandarin Blueprint](https://www.mandarinblueprint.com/)), связывая иероглиф, его значение, компоненты, актера и мнемоническое пространство.
 - **Поля карточек**:
   - Иероглиф: Отдельный иероглиф (например, 你).
@@ -31,6 +33,7 @@
 - **Выходной файл**: `vova_hanzi_spaces_actors_rus.apkg`.
 
 ### Words and Phrases Deck Generator
+
 - **Примеры фраз**: Извлекает примеры китайских фраз (словосочетаний или предложений) из [Tatoeba](https://tatoeba.org/) с переводом на английский (переводится на русский через Google Translate).
 - **Поля карточек**:
   - Chinese: Фраза или слово (например, 你好).
@@ -53,6 +56,7 @@
 - **Выходной файл**: `vova_chinese_hsk1.apkg`.
 
 ### Общие особенности
+
 - **Аудио**: Forvo API для произношения (опционально).
 - **Порядок черт**: SVG-изображения из папок `svgs` или `svgs-still` для визуализации порядка написания.
 - **Пиньинь**: Цветное форматирование тонов (1-й: синий, 2-й: зелёный, 3-й: пурпурный, 4-й: красный, 5-й: серый).
@@ -86,21 +90,25 @@
 ## Установка
 
 1. **Склонируйте репозиторий или скачайте скрипты**:
-   ```bash
-   git clone <репозиторий>
-   cd chinese-anki-deck-generator
+
+```   git clone https://github.com/hikarikumo/anki_hanyu_decks_generation
+   cd anki_hanyu_decks_generation```
+
+    Создайте файл .venv в корне проекта:
+
+```    python3 -m venv .venv```
 
     Установите зависимости:
-    bash
 
-pip install genanki pypinyin hanziconv requests python-dotenv googletrans==4.0.0-rc1
-Для hanzi_movie_method.py дополнительно:
-bash
-pip install openai
-Настройте ключи API:
+```    pip install -r requirements.txt```
 
-    Создайте файл .env в корне проекта:
-    env
+```    pip install genanki pypinyin hanziconv requests python-dotenv googletrans>=4.0.0-rc1```
+
+    Для hanzi_movie_method.py дополнительно:
+
+```    pip install openai```
+
+    Настройте ключи API:
 
     OPENAI_API_KEY=ваш_ключ_от_openai  # Только для hanzi_movie_method.py
     FORVO_API_KEY=ваш_ключ_от_forvo   # Опционально для обоих
@@ -108,108 +116,87 @@ pip install openai
         OpenAI: https://platform.openai.com/
         Forvo: https://www.forvo.com/
 
-(Опционально) Подготовьте базу компонентов:
 
-    Для hanzi_movie_method.py создайте hanzi_db.txt. Пример формата:
-    json
 
-    {"character":"你","decomposition":"⿰亻尔","radical":"亻","etymology":{"hint":"человек + ты"},"definition":"ты"}
-    {"character":"好","decomposition":"⿰女子","radical":"女","etymology":{"hint":"женщина + ребенок"},"definition":"хороший"}
-    Без файла используется встроенный словарь.
-
-Подготовьте SVG для порядка черт:
-
-    Поместите SVG-файлы в папки svgs и svgs-still (например, 20320.svg для 你).
-    (Опционально) Добавьте graphics.txt от MakeMeAHanzi для обработки порядка черт.
-
-Создайте входные файлы:
+    Создайте входные файлы:
 
     Для hanzi_movie_method.py: Создайте chinese_words_hanzi_movie_method.txt с отдельными иероглифами (по одному на строку):
     text
 
-你
-好
-我
-爱
-家
-Для tatoeba_examples.py: Создайте chinese_words.txt с фразами или словами:
-text
+        你
+        好
+        我
+        爱
+        家
 
-        你好
-        谢谢
-        再见
-        学习
-        Если файлы отсутствуют, скрипты создадут их с примерами.
-
-Использование
-Hanzi Movie Method Deck Generator
+2. **Использование Hanzi Movie Method Deck Generator**:
 
     Запустите скрипт:
-    bash
 
-python hanzi_movie_method.py
-Что произойдёт:
+```    python hanzi_movie_method.py```
 
-    Читает иероглифы из chinese_words_hanzi_movie_method.txt.
-    Удаляет дубликаты, проверяя архив в input_words_hmm_archive.
-    Для каждого иероглифа:
-        Получает пиньинь и цветной пиньинь.
-        Извлекает значение и компоненты (hanzi_db.txt или словарь).
-        Генерирует мнемоническое пространство и выбирает актера.
-        Загружает аудио (Forvo API, если настроен).
-        Генерирует историю через OpenAI API в стиле Hanzi Movie Method.
-        Добавляет SVG для порядка черт.
-    Создаёт колоду vova_hanzi_spaces_actors_rus.apkg.
-    Архивирует входной файл в input_words_hmm_archive.
-    Выводит результаты в консоль.
+    Что произойдёт:
 
-Пример вывода:
-text
+        Читает иероглифы из chinese_words_hanzi_movie_method.txt.
+        Удаляет дубликаты, проверяя архив в input_words_hmm_archive.
+        Для каждого иероглифа:
+            Получает пиньинь и цветной пиньинь.
+            Извлекает значение и компоненты (hanzi_db.txt или словарь).
+            Генерирует мнемоническое пространство и выбирает актера.
+            Загружает аудио (Forvo API, если настроен).
+            Генерирует историю через OpenAI API в стиле Hanzi Movie Method.
+            Добавляет SVG для порядка черт.
+        Создаёт колоду vova_hanzi_spaces_actors_rus.apkg.
+        Архивирует входной файл в input_words_hmm_archive.
+        Выводит результаты в консоль.
 
-    Обработанные иероглифы:
-    你 (nǐ): ты, (Николай Басков) Энциклопедическая библиотека-дом - Архивный вход
-    Подсказка: 人 (человек), 尔 (ты, второй)
-    История: В Энциклопедической библиотеке Николай Басков видит 人, поющего его хиты! ...
-    ...
-    Создана колода Anki: vova_hanzi_spaces_actors_rus.apkg
-    Archived input file: input_words_hmm_archive/chinese_words_2025-04-12_12_00_00.txt
+    Пример вывода:
+    text
 
-Words and Phrases Deck Generator
+        Обработанные иероглифы:
+        你 (nǐ): ты, (Николай Басков) Энциклопедическая библиотека-дом - Архивный вход
+        Подсказка: 人 (человек), 尔 (ты, второй)
+        История: В Энциклопедической библиотеке Николай Басков видит 人, поющего его хиты! ...
+        ...
+        Создана колода Anki: vova_hanzi_spaces_actors_rus.apkg
+        Archived input file: input_words_hmm_archive/chinese_words_2025-04-12_12_00_00.txt
 
-    Запустите скрипт:
-    bash
+    Words and Phrases Deck Generator
 
-python tatoeba_examples.py
-Что произойдёт:
+        Запустите скрипт:
 
-    Читает фразы из chinese_words.txt.
-    Удаляет дубликаты, проверяя архив в input_words_archive.
-    Для каждой фразы:
-        Получает пиньинь и цветной пиньинь.
-        Извлекает значение (Google Translate или словарь).
-        Загружает пример предложения из Tatoeba API.
-        Загружает аудио (Forvo API, если настроен).
-        Добавляет SVG для порядка черт иероглифов фразы.
-    Создаёт колоду vova_chinese_hsk1.apkg.
-    Архивирует входной файл в input_words_archive.
-    Выводит результаты в консоль.
+````    python3 anki_hanyu.py````
 
-Пример вывода:
-text
+    Что произойдёт:
 
-    Processed words:
-    你好 (nǐ hǎo): Привет
-    谢谢 (xiè xiè): Спасибо
-    ...
-    Created Anki deck: vova_chinese_hsk1.apkg
-    Archived input file: input_words_archive/chinese_words_2025-04-12_12_00_00.txt
-    Импортируйте колоду в Anki:
-        Откройте Anki.
-        Выберите Файл -> Импорт.
-        Укажите .apkg файл (vova_hanzi_spaces_actors_rus.apkg или vova_chinese_hsk1.apkg).
-        Начните изучение!
+        Читает фразы из chinese_words.txt.
+        Удаляет дубликаты, проверяя архив в input_words_archive.
+        Для каждой фразы:
+            Получает пиньинь и цветной пиньинь.
+            Извлекает значение (Google Translate или словарь).
+            Загружает пример предложения из Tatoeba API.
+            Загружает аудио (Forvo API, если настроен).
+            Добавляет SVG для порядка черт иероглифов фразы.
+        Создаёт колоду vova_chinese_hsk1.apkg.
+        Архивирует входной файл в input_words_archive.
+        Выводит результаты в консоль.
 
-Настройка API
+    Пример вывода:
+    text
+
+        Processed words:
+        你好 (nǐ hǎo): Привет
+        谢谢 (xiè xiè): Спасибо
+        ...
+        Created Anki deck: vova_chinese_hsk1.apkg
+        Archived input file: input_words_archive/chinese_words_2025-04-12_12_00_00.txt
+        Импортируйте колоду в Anki:
+            Откройте Anki.
+            Выберите Файл -> Импорт.
+            Укажите .apkg файл (vova_hanzi_spaces_actors_rus.apkg или vova_chinese_hsk1.apkg).
+            Начните изучение!
+
+3. **Настройка API**
 
     OpenAI API (только для hanzi_movie_method.py):
         Модель: gpt-4o-mini (можно заменить на gpt-4o или gpt-3.5-turbo в переменной OPENAI_MODEL).
@@ -219,7 +206,7 @@ text
         Требуется ключ для загрузки аудио.
         Без ключа аудио не добавляется, но скрипты продолжают работать.
 
-Проблемы и решения
+4. **Проблемы и решения**
 
     Истории обрываются (Hanzi Movie Method):
         Увеличьте OPENAI_MAX_TOKENS в hanzi_movie_method.py.
@@ -238,13 +225,13 @@ text
     Дубликаты не удаляются:
         Проверьте папки input_words_hmm_archive или input_words_archive на наличие старых файлов.
 
-Благодарности
+**Благодарности**
 
 Особая благодарность следующим проектам за их вклад в этот проект:
 
-    [MakeMeAHanzi](https://github.com/skishore/makemeahanzi) за предоставление данных и SVG-файлов для порядка черт иероглифов, которые значительно упрощают визуальное изучение китайского языка.
-    [genanki](https://github.com/kerrickstaley/genanki) за мощную библиотеку для создания Anki-колод, которая сделала возможной генерацию карточек в этом проекте.
-    [MandarinBlueprint](https://www.mandarinblueprint.com/category/hanzi-movie-method-series/) За подробное описание мнемонического метода запоминания китайских иероглифов
+[MakeMeAHanzi](https://github.com/skishore/makemeahanzi/) за предоставление данных и SVG-файлов для порядка черт иероглифов, которые значительно упрощают визуальное изучение китайского языка.
+[genanki](https://github.com/kerrickstaley/genanki/) за мощную библиотеку для создания Anki-колод, которая сделала возможной генерацию карточек в этом проекте.
+[Mandarin Blueprint](https://www.mandarinblueprint.com/category/hanzi-movie-method-series/) За подробное описание мнемонического метода запоминания китайских иероглифов
 
 Лицензия
 
