@@ -2,8 +2,8 @@
 
 Этот проект включает два Python-скрипта для создания Anki-колод, упрощающих изучение китайского языка:
 
-1. **Hanzi Movie Method Deck Generator** (`hanzi_movie_method.py`): Создаёт карточки для отдельных китайских иероглифов с мнемоническими историями по методу Hanzi Movie Method, вдохновлённому [Mandarin Blueprint](https://www.mandarinblueprint.com/). Использует OpenAI API для генерации историй и Forvo API для аудио.
-2. **Words and Phrases Deck Generator** (`tatoeba_examples.py`): Создаёт карточки для китайских фраз и словосочетаний с примерами предложений из базы [Tatoeba](https://tatoeba.org/). Использует Forvo API для аудио, без OpenAI API.
+1. **Hanzi Movie Method Deck Generator** (`anki_hanzi_movie_method_rus.py`): Создаёт карточки для отдельных китайских иероглифов с мнемоническими историями по методу Hanzi Movie Method, вдохновлённому [Mandarin Blueprint](https://www.mandarinblueprint.com/). Использует OpenAI API для генерации историй и Forvo API для аудио.
+2. **Words and Phrases Deck Generator** (`anki_hanyu.py`): Создаёт карточки для китайских фраз и словосочетаний с примерами предложений из базы [Tatoeba](https://tatoeba.org/). Использует Forvo API для аудио, без OpenAI API.
 
 Оба скрипта поддерживают упрощённые иероглифы, цветной пиньинь, порядок черт и вывод на русском языке. Они подходят для разных подходов: мнемонического запоминания иероглифов или изучения фраз в контексте.
 
@@ -53,7 +53,7 @@
   - Примеры: Tatoeba API.
   - Аудио: Forvo API.
   - Порядок черт: SVG-файлы.
-- **Выходной файл**: `vova_chinese_hsk1.apkg`.
+- **Выходной файл**: `vova_chinese.apkg`.
 
 ### Общие особенности
 
@@ -115,8 +115,6 @@
     Получите ключи:
         OpenAI: https://platform.openai.com/
         Forvo: https://www.forvo.com/
-
-
 
     Создайте входные файлы:
 
@@ -198,31 +196,31 @@
 
 3. **Настройка API**
 
-    OpenAI API (только для hanzi_movie_method.py):
-        Модель: gpt-4o-mini (можно заменить на gpt-4o или gpt-3.5-turbo в переменной OPENAI_MODEL).
-        Токены: OPENAI_MAX_TOKENS=300 для полных историй.
-        Температура: OPENAI_TEMPERATURE=0.8 для баланса креативности и структуры.
-    Forvo API (для обоих скриптов):
-        Требуется ключ для загрузки аудио.
-        Без ключа аудио не добавляется, но скрипты продолжают работать.
+    - OpenAI API (только для hanzi_movie_method.py):
+        - Модель: gpt-4o-mini (можно заменить на gpt-4o или gpt-3.5-turbo в переменной OPENAI_MODEL).
+        - Токены: OPENAI_MAX_TOKENS=300 для полных историй.
+        - Температура: OPENAI_TEMPERATURE=0.8 для баланса креативности и структуры.
+    - Forvo API (для обоих скриптов):
+        - Требуется ключ для загрузки аудио.
+        - Без ключа аудио не добавляется, но скрипты продолжают работать.
 
 4. **Проблемы и решения**
 
-    Истории обрываются (Hanzi Movie Method):
+    - Истории обрываются (Hanzi Movie Method):
         Увеличьте OPENAI_MAX_TOKENS в hanzi_movie_method.py.
         Проверьте, что OPENAI_API_KEY действителен и лимиты не превышены.
-    Нет аудио:
+    - Нет аудио:
         Убедитесь, что FORVO_API_KEY указан в .env.
         Проверьте интернет-соединение или лимиты Forvo API.
-    Примеры отсутствуют (Words and Phrases):
+    - Примеры отсутствуют (Words and Phrases):
         Tatoeba может не содержать примеров для некоторых фраз. Поле останется пустым.
         Проверьте интернет-соединение.
-    Порядок черт не отображается:
+    - Порядок черт не отображается:
         Убедитесь, что папки svgs и svgs-still содержат SVG-файлы (например, 20320.svg для 你).
         Проверьте наличие graphics.txt.
-    Ошибки перевода (Words and Phrases):
+    - Ошибки перевода (Words and Phrases):
         Google Translate может быть нестабильным. Используйте hanzi_db.txt или другой словарь для значений.
-    Дубликаты не удаляются:
+    - Дубликаты не удаляются:
         Проверьте папки input_words_hmm_archive или input_words_archive на наличие старых файлов.
 
 **Благодарности**
