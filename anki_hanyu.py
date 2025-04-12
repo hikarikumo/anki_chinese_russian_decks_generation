@@ -9,7 +9,7 @@ from googletrans import Translator
 from datetime import datetime
 from hanziconv import HanziConv
 import json
-
+import random
 
 
 anki_deck_name = "Vova chinese HSK1"
@@ -256,7 +256,7 @@ class ChineseAnkiGenerator:
         # (Your existing implementation remains unchanged)
         lang = "cmn"
         translation_lang = "eng"
-        url = f"https://tatoeba.org/eng/api_v0/search?from={lang}&to={translation_lang}&query={word}&sort=relevance&word_count_min=1"
+        url = f"https://tatoeba.org/eng/api_v0/search?from={lang}&to={translation_lang}&query={word}"
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
@@ -268,14 +268,16 @@ class ChineseAnkiGenerator:
                     continue
                 chinese_text = HanziConv.toSimplified(item["text"])
                 if item["translations"]:
-                    first_translation = item["translations"][0] if item["translations"] else None
-                    if isinstance(first_translation, dict):
+                    if isinstance(item.get('translations'), dict):
                         translation_text = first_translation.get("text", "")
-                    elif isinstance(first_translation, list) and first_translation:
-                        translation_text = first_translation[0].get("text", "") if isinstance(first_translation[0], dict) else str(first_translation[0])
-                    else:
-                        translation_text = ""
-                    if translation_text.strip():
+                    elif isinstance(item.get('translations'), list):
+                        translations = [element for element in item["translations"] if element]
+                        translations = sorted(translations[0], key=lambda x: len(x.get("text", "")))
+                        first_translation = translations[0]
+                        translation_text = first_translation.get("text", "") if isinstance(first_translation, dict) else str(first_translation)
+
+                        chinese_text = chinese_text.strip()
+                        translation_text = translation_text.strip()
                         return {"chinese": chinese_text, "meaning": translation_text}
                 return None
         except Exception as e:
@@ -379,6 +381,9 @@ class ChineseAnkiGenerator:
                 stroke_tag,        # StrokeOrder
             ],
         )
+        # debugiging
+        # print(f"Adding note for {word} to deck")
+        # print(f"Note fields: {note.fields}")
 
         self.deck.add_note(note)
         time.sleep(1)
@@ -466,11 +471,13 @@ def check_input_duplicates(input_file):
             words += [line.strip().replace("\u200b", "") for line in f if line.strip()]
     with open(input_file, "r", encoding="utf-8") as f:
         input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
+
     # output_file = f"input_words_archive/chinese_words_{datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}.txt"
     # with open(output_file, "w", encoding="utf-8") as f:
     #     for word in words:
     #         f.write(f"{word}\n")
     # print(f"Found {len(words)} words in archive")
+
     input_words = list(set(input_words))
     for word in input_words:
         if not is_chinese_char(word):
