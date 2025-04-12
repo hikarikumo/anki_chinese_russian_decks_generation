@@ -112,9 +112,10 @@
 
     OPENAI_API_KEY=ваш_ключ_от_openai  # Только для hanzi_movie_method.py
     FORVO_API_KEY=ваш_ключ_от_forvo   # Опционально для обоих
+
     Получите ключи:
-        OpenAI: https://platform.openai.com/
-        Forvo: https://www.forvo.com/
+      - OpenAI: https://platform.openai.com/
+      - Forvo: https://www.forvo.com/
 
     Создайте входные файлы:
 
