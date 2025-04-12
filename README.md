@@ -114,8 +114,8 @@
     FORVO_API_KEY=ваш_ключ_от_forvo   # Опционально для обоих
 
     Получите ключи:
-      - OpenAI: https://platform.openai.com/
-      - Forvo: https://www.forvo.com/
+      - [OpenAI](https://platform.openai.com/)
+      - [Forvo](https://api.forvo.com/login/)
 
     Создайте входные файлы:
 
@@ -224,7 +224,7 @@
     - Дубликаты не удаляются:
         Проверьте папки input_words_hmm_archive или input_words_archive на наличие старых файлов.
 
-**Благодарности**
+5. **Благодарности**
 
 Особая благодарность следующим проектам за их вклад в этот проект:
 
@@ -232,7 +232,7 @@
 - [genanki](https://github.com/kerrickstaley/genanki/) за мощную библиотеку для создания Anki-колод, которая сделала возможной генерацию карточек в этом проекте.
 - [Mandarin Blueprint](https://www.mandarinblueprint.com/category/hanzi-movie-method-series/) За подробное описание мнемонического метода запоминания китайских иероглифов
 
-Лицензия
+6. **Лицензия**
 
 MIT License. Используйте, модифицируйте и распространяйте свободно.
 
