@@ -229,9 +229,9 @@
 
 Особая благодарность следующим проектам за их вклад в этот проект:
 
-[MakeMeAHanzi](https://github.com/skishore/makemeahanzi/) за предоставление данных и SVG-файлов для порядка черт иероглифов, которые значительно упрощают визуальное изучение китайского языка.
-[genanki](https://github.com/kerrickstaley/genanki/) за мощную библиотеку для создания Anki-колод, которая сделала возможной генерацию карточек в этом проекте.
-[Mandarin Blueprint](https://www.mandarinblueprint.com/category/hanzi-movie-method-series/) За подробное описание мнемонического метода запоминания китайских иероглифов
+- [MakeMeAHanzi](https://github.com/skishore/makemeahanzi/) за предоставление данных и SVG-файлов для порядка черт иероглифов, которые значительно упрощают визуальное изучение китайского языка.
+- [genanki](https://github.com/kerrickstaley/genanki/) за мощную библиотеку для создания Anki-колод, которая сделала возможной генерацию карточек в этом проекте.
+- [Mandarin Blueprint](https://www.mandarinblueprint.com/category/hanzi-movie-method-series/) За подробное описание мнемонического метода запоминания китайских иероглифов
 
 Лицензия
 
