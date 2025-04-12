@@ -9,12 +9,11 @@ from googletrans import Translator
 from datetime import datetime
 from hanziconv import HanziConv
 import json
-import svgwrite
-import cairosvg
 
 
-# anki_deck_name = "Vova chinese HSK1"
-anki_deck_name = "Ян Боровски Грамматика"
+
+anki_deck_name = "Vova chinese HSK1"
+# anki_deck_name = "Ян Боровски Грамматика"
 output_deck = "vova_chinese_hsk1.apkg"
 input_file = "chinese_words.txt"
 
@@ -54,7 +53,6 @@ class ChineseAnkiGenerator:
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
                         {{Audio}}
-                        <div class="stroke-order">{{StrokeOrder}}</div>
                     """,
                 },
                 {
@@ -69,7 +67,6 @@ class ChineseAnkiGenerator:
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
                         {{Audio}}
-                        <div class="stroke-order">{{StrokeOrder}}</div>
                     """,
                 },
             ],
@@ -423,36 +420,36 @@ class ChineseAnkiGenerator:
         return results
 
     def create_deck_from_file(self, input_words, output_file=output_deck):
-            """Create Anki deck from Chinese words"""
-            results = []
-            for word in input_words:
-                result = self.process_word(word)
-                results.append(result)
+        """Create Anki deck from Chinese words"""
+        results = []
+        for word in input_words:
+            result = self.process_word(word)
+            results.append(result)
 
-            # Create package with media files
-            package = genanki.Package(self.deck)
-            if self.media_files:
-                package.media_files = self.media_files
+        # Create package with media files
+        package = genanki.Package(self.deck)
+        if self.media_files:
+            package.media_files = self.media_files
 
-            # Write to file
-            package.write_to_file(output_file)
-            print(f"Created Anki deck: {output_file}")
+        # Write to file
+        package.write_to_file(output_file)
+        print(f"Created Anki deck: {output_file}")
 
-            # copy inputs to archive
-            output_file_archive_path = "input_words_archive"
-            output_filename = (
-                f'chinese_words_{datetime.now().strftime("%Y-%m-%d_%H_%M_%S")}.txt'
-            )
-            with open(input_file, "r", encoding="utf-8") as f:
-                with open(
-                    f"{output_file_archive_path}/{output_filename}", "w", encoding="utf-8"
-                ) as f2:
-                    f2.write(f.read())
-            with open(input_file, "w", encoding="utf-8") as f:
-                f.write("")
-            print(f"Archived input file: {output_file_archive_path}/{output_filename}")
+        # copy inputs to archive
+        output_file_archive_path = "input_words_archive"
+        output_filename = (
+            f'chinese_words_{datetime.now().strftime("%Y-%m-%d_%H_%M_%S")}.txt'
+        )
+        with open(input_file, "r", encoding="utf-8") as f:
+            with open(
+                f"{output_file_archive_path}/{output_filename}", "w", encoding="utf-8"
+            ) as f2:
+                f2.write(f.read())
+        with open(input_file, "w", encoding="utf-8") as f:
+            f.write("")
+        print(f"Archived input file: {output_file_archive_path}/{output_filename}")
 
-            return results
+        return results
 
 async def google_translate(word):
     translator = Translator()
@@ -469,6 +466,11 @@ def check_input_duplicates(input_file):
             words += [line.strip().replace("\u200b", "") for line in f if line.strip()]
     with open(input_file, "r", encoding="utf-8") as f:
         input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
+    # output_file = f"input_words_archive/chinese_words_{datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}.txt"
+    # with open(output_file, "w", encoding="utf-8") as f:
+    #     for word in words:
+    #         f.write(f"{word}\n")
+    # print(f"Found {len(words)} words in archive")
     input_words = list(set(input_words))
     for word in input_words:
         if not is_chinese_char(word):
