@@ -1,0 +1,7 @@
+genanki
+pypinyin
+hanziconv
+requests
+python-dotenv
+googletrans
+openai
