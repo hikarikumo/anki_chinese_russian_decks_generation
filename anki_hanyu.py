@@ -13,7 +13,7 @@ import random
 
 
 anki_deck_name = "Vova chinese HSK1"
-# anki_deck_name = "Ян Боровски Грамматика"
+# anki_deck_name = "Ян Боровски - частотные слова"
 output_deck = "vova_chinese_hsk1.apkg"
 input_file = "chinese_words.txt"
 
