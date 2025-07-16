@@ -12,9 +12,11 @@ import json
 import random
 
 
-anki_deck_name = "Vova chinese HSK1"
+# anki_deck_name = "Vova chinese HSK1"
+anki_deck_name = "DuChinese chinese HSK1"
 # anki_deck_name = "Ян Боровски - частотные слова"
-output_deck = "vova_chinese_hsk1.apkg"
+# output_deck = "vova_chinese_hsk1.apkg"
+output_deck = "Duchinese_hsk1.apkg"
 input_file = "chinese_words.txt"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
