@@ -10,13 +10,19 @@ from datetime import datetime
 from hanziconv import HanziConv
 import json
 import random
+import openai
 
 
 # anki_deck_name = "Vova chinese HSK1"
-anki_deck_name = "DuChinese chinese HSK1"
+# anki_deck_name = "DuChinese chinese HSK1"
+# anki_deck_name = "HSK3 trade bargain"
+anki_deck_name = "HSK3 Standard course"
+
 # anki_deck_name = "Ян Боровски - частотные слова"
 # output_deck = "vova_chinese_hsk1.apkg"
-output_deck = "Duchinese_hsk1.apkg"
+# output_deck = "Duchinese_hsk1.apkg"
+output_deck = "HSK3_Standard_course.apkg"
+# output_deck = "HSK3_trade_bargain.apkg"
 input_file = "chinese_words.txt"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
@@ -253,38 +259,79 @@ class ChineseAnkiGenerator:
             except:
                 return "Unable to fetch definition"
 
-    def get_example_from_tatoeba(self, word):
-        """Get example sentences from Tatoeba, ensuring Simplified Chinese"""
-        # (Your existing implementation remains unchanged)
-        lang = "cmn"
-        translation_lang = "eng"
-        url = f"https://tatoeba.org/eng/api_v0/search?from={lang}&to={translation_lang}&query={word}"
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            if not data or "results" not in data:
-                return None
-            for item in data["results"]:
-                if not all(key in item for key in ["text", "translations"]):
-                    continue
-                chinese_text = HanziConv.toSimplified(item["text"])
-                if item["translations"]:
-                    if isinstance(item.get('translations'), dict):
-                        translation_text = first_translation.get("text", "")
-                    elif isinstance(item.get('translations'), list):
-                        translations = [element for element in item["translations"] if element]
-                        translations = sorted(translations[0], key=lambda x: len(x.get("text", "")))
-                        first_translation = translations[0]
-                        translation_text = first_translation.get("text", "") if isinstance(first_translation, dict) else str(first_translation)
+    # def get_example_from_tatoeba(self, word):
+    #     """Get example sentences from Tatoeba, ensuring Simplified Chinese"""
+    #     # (Your existing implementation remains unchanged)
+    #     lang = "cmn"
+    #     translation_lang = "eng"
+    #     url = f"https://tatoeba.org/eng/api_v0/search?from={lang}&to={translation_lang}&query={word}"
+    #     try:
+    #         response = requests.get(url, timeout=10)
+    #         response.raise_for_status()
+    #         data = response.json()
+    #         if not data or "results" not in data:
+    #             return None
+    #         for item in data["results"]:
+    #             if not all(key in item for key in ["text", "translations"]):
+    #                 continue
+    #             chinese_text = HanziConv.toSimplified(item["text"])
+    #             if item["translations"]:
+    #                 if isinstance(item.get('translations'), dict):
+    #                     translation_text = first_translation.get("text", "")
+    #                 elif isinstance(item.get('translations'), list):
+    #                     translations = [element for element in item["translations"] if element]
+    #                     translations = sorted(translations[0], key=lambda x: len(x.get("text", "")))
+    #                     first_translation = translations[0]
+    #                     translation_text = first_translation.get("text", "") if isinstance(first_translation, dict) else str(first_translation)
 
-                        chinese_text = chinese_text.strip()
-                        translation_text = translation_text.strip()
-                        return {"chinese": chinese_text, "meaning": translation_text}
+    #                     chinese_text = chinese_text.strip()
+    #                     translation_text = translation_text.strip()
+    #                     return {"chinese": chinese_text, "meaning": translation_text}
+    #             return None
+    #     except Exception as e:
+    #         print(f"Error fetching example: {e}")
+    #         return None
+
+
+    def get_example_from_chatgpt(self, word):
+            """
+            Generate an example sentence using the word with translation via ChatGPT.
+            Ensures sentence is in Simplified Chinese with Russian translation.
+            """
+            print(f'{word=}')
+
+            prompt = (
+                f"Provide one example sentence in Simplified Chinese that uses the word '{word}', "
+                "along with its Russian translation. Return the response in JSON format like this:\n"
+                "{\n  \"chinese\": \"<Simplified Chinese sentence>\",\n  \"meaning\": \"<Russian translation>\"\n}"
+            )
+            try:
+                client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                if not client.api_key: raise openai.OpenAIError("Ключ OpenAI API не найден")
+                
+                # The corrected line is here
+                response = client.chat.completions.create( 
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a bilingual assistant skilled in Chinese and Russian."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=150
+                )
+                
+                message_content = response.choices[0].message.content
+                # Attempt to parse the JSON-like response
+                example = json.loads(message_content.strip())
+                if "chinese" in example and "meaning" in example:
+                    return example
+                else:
+                    print("Unexpected format in ChatGPT response.")
+                    return None
+            except Exception as e:
+                print(f"Error generating example with ChatGPT: {e}")
                 return None
-        except Exception as e:
-            print(f"Error fetching example: {e}")
-            return None
+
 
     def get_audio_from_forvo(self, word):
         """Get audio pronunciation from Forvo API"""
@@ -330,7 +377,8 @@ class ChineseAnkiGenerator:
 
         # Get example sentence
         try:
-            example = self.get_example_from_tatoeba(word)
+            # example = self.get_example_from_tatoeba(word)
+            example = self.get_example_from_chatgpt(word)
             example_chinese = example["chinese"] if example else ""
             example_meaning = example["meaning"] if example else ""
             example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)
