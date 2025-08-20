@@ -516,7 +516,7 @@ class ChineseAnkiGenerator:
 
 async def google_translate(word):
     translator = Translator()
-    translation = await translator.translate(word, src="zh-cn", dest="en")
+    translation = await translator.translate(word, src="zh-cn", dest="ru")
     if translation and translation.text:
         return translation.text.capitalize()
 
