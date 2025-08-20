@@ -15,7 +15,7 @@ from openai import OpenAI
 from openai import OpenAIError
 
 # input_file = "chinese_words_hanzi_movie_method.txt"
-input_file = "du_chinese_words_hanzi_movie_method.txt"
+input_file = "input_du_chinese_words_hanzi_movie_method.txt"
 output_file_archive_path = "input_words_du_chinese_hmm_archive"
 
 anki_deck_name = "DuChinese Hanzi Spaces with Actors (Русский)"
@@ -27,9 +27,9 @@ OPENAI_MODEL = "gpt-4o-mini"
 OPENAI_MAX_TOKENS = 300
 OPENAI_TEMPERATURE = 0.8
 # --- FIXED: Added missing constants for DALL-E ---
-OPENAI_IMAGE_MODEL = "dall-e-3"
+# OPENAI_IMAGE_MODEL = "dall-e-3"
 # OPENAI_IMAGE_MODEL = "dall-e-2"
-IMAGE_SIZE = "1024x1024"
+# IMAGE_SIZE = "1024x1024"
 
 class HanziComponentsDB:
     def __init__(self, db_file='hanzi_db.txt'):
@@ -105,7 +105,6 @@ class HanziSpacesGenerator:
                 {"name": "Подсказка"},
                 {"name": "Аудио"},
                 {"name": "История"},
-                {"name": "ИсторияИзображение"},  # New field for the story image
                 {"name": "StrokeOrder"},
             ],
             templates=[
@@ -120,7 +119,6 @@ class HanziSpacesGenerator:
                         <div class="space"><b>Пространство:</b> {{Пространство}}</div>
                         <div class="hint"><b>Подсказка:</b> {{Подсказка}}</div>
                         <div class="story"><b>История:</b> {{История}}</div>
-                        <div class="story-image">{{ИсторияИзображение}}</div>
                         {{Аудио}}
                     """,
                 },
@@ -135,7 +133,6 @@ class HanziSpacesGenerator:
                         <div class="space"><b>Пространство:</b> {{Пространство}}</div>
                         <div class="hint"><b>Подсказка:</b> {{Подсказка}}</div>
                         <div class="story"><b>История:</b> {{История}}</div>
-                        <div class="story-image">{{ИсторияИзображение}}</div>
                         {{Аудио}}
                     """,
                 },
@@ -148,7 +145,6 @@ class HanziSpacesGenerator:
                 .meaning { font-size: 20px; margin-bottom: 15px; }
                 .space, .hint, .story { font-size: 16px; margin-top: 10px; }
                 .story { color: #333; font-style: italic; }
-                .story-image img { max-width: 350px; height: auto; margin-top: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
                 .tone1 { color: blue; } .tone2 { color: green; } .tone3 { color: purple; } .tone4 { color: red; } .tone5 { color: gray; }
             """,
         )
@@ -359,51 +355,51 @@ class HanziSpacesGenerator:
             print(f"Ошибка при вызове OpenAI API для {hanzi}: {e}")
             return f"{actor} в {location} видит иероглиф {hanzi} и вспоминает '{primary_meaning}'."
 
-    def _build_image_prompt(self, hanzi, primary_meaning, actor, location, story):
-        """
-        Builds a prompt focused on visual style and positive framing 
-        to minimize the chance of text generation.
-        """
-        # Переменная `hanzi` намеренно НЕ используется в промпте,
-        # так как это главный триггер для генерации псевдо-иероглифов.
+    # def _build_image_prompt(self, hanzi, primary_meaning, actor, location, story):
+    #     """
+    #     Builds a prompt focused on visual style and positive framing 
+    #     to minimize the chance of text generation.
+    #     """
+    #     # Переменная `hanzi` намеренно НЕ используется в промпте,
+    #     # так как это главный триггер для генерации псевдо-иероглифов.
         
-        return (
-            # 1. Задаем стиль, который редко содержит текст
-            f"Фотореалистичное изображение, кинематографический свет, высокая детализация. "
+    #     return (
+    #         # 1. Задаем стиль, который редко содержит текст
+    #         f"Фотореалистичное изображение, кинематографический свет, высокая детализация. "
             
-            # 2. Описываем сцену без упоминания иероглифа
-            f"Сцена, основанная на истории: '{story}'.\n"
-            f"На сцене находятся: {actor} в локации '{location}'. "
-            f"Изображение иллюстрирует идею '{primary_meaning}'.\n\n"
-            # 3. Один, но очень сильный и простой запрет в самом конце
-            f"КРАЙНЕ ВАЖНО: на изображении должна быть только сцена. Никаких букв, слов, надписей, текста, символов или логотипов. Абсолютно чистое изображение."
-        )
+    #         # 2. Описываем сцену без упоминания иероглифа
+    #         f"Сцена, основанная на истории: '{story}'.\n"
+    #         f"На сцене находятся: {actor} в локации '{location}'. "
+    #         f"Изображение иллюстрирует идею '{primary_meaning}'.\n\n"
+    #         # 3. Один, но очень сильный и простой запрет в самом конце
+    #         f"КРАЙНЕ ВАЖНО: на изображении должна быть только сцена. Никаких букв, слов, надписей, текста, символов или логотипов. Абсолютно чистое изображение."
+    #     )
 
-    def generate_story_image(self, hanzi, meaning_ru, actor, location, story):
-        image_dir = "story_images"
-        os.makedirs(image_dir, exist_ok=True)
-        image_file_path = f"{image_dir}/{hanzi}_story.png"
-        if os.path.exists(image_file_path):
-            print(f"Image for {hanzi} already exists. Skipping generation.")
-            return image_file_path
+    # def generate_story_image(self, hanzi, meaning_ru, actor, location, story):
+    #     image_dir = "story_images"
+    #     os.makedirs(image_dir, exist_ok=True)
+    #     image_file_path = f"{image_dir}/{hanzi}_story.png"
+    #     if os.path.exists(image_file_path):
+    #         print(f"Image for {hanzi} already exists. Skipping generation.")
+    #         return image_file_path
 
-        primary_meaning_ru = self.components_db.parse_separated_values(meaning_ru)[0] if meaning_ru else ""
-        prompt = self._build_image_prompt(hanzi, primary_meaning_ru, actor, location, story)
-        try:
-            print(f"Generating image for {hanzi}...")
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            if not client.api_key: raise OpenAIError("Ключ OpenAI API не найден")
-            response = client.images.generate(model=OPENAI_IMAGE_MODEL, prompt=prompt, n=1, size=IMAGE_SIZE)
-            image_url = response.data[0].url
-            image_response = requests.get(image_url)
-            if image_response.status_code == 200:
-                with open(image_file_path, "wb") as f:
-                    f.write(image_response.content)
-                print(f"Successfully saved image for {hanzi} to {image_file_path}")
-                return image_file_path
-        except Exception as e:
-            print(f"Error generating image for {hanzi} with DALL-E: {e}")
-        return None
+    #     primary_meaning_ru = self.components_db.parse_separated_values(meaning_ru)[0] if meaning_ru else ""
+    #     prompt = self._build_image_prompt(hanzi, primary_meaning_ru, actor, location, story)
+    #     try:
+    #         print(f"Generating image for {hanzi}...")
+    #         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    #         if not client.api_key: raise OpenAIError("Ключ OpenAI API не найден")
+    #         response = client.images.generate(model=OPENAI_IMAGE_MODEL, prompt=prompt, n=1, size=IMAGE_SIZE)
+    #         image_url = response.data[0].url
+    #         image_response = requests.get(image_url)
+    #         if image_response.status_code == 200:
+    #             with open(image_file_path, "wb") as f:
+    #                 f.write(image_response.content)
+    #             print(f"Successfully saved image for {hanzi} to {image_file_path}")
+    #             return image_file_path
+    #     except Exception as e:
+    #         print(f"Error generating image for {hanzi} with DALL-E: {e}")
+    #     return None
 
     def process_hanzi(self, hanzi):
         hanzi = HanziConv.toSimplified(hanzi)
@@ -428,11 +424,11 @@ class HanziSpacesGenerator:
         
         story = self.generate_hanzi_movie_story(hanzi, meaning_ru, actor, location, hint)
         
-        image_tag = ""
-        image_file = self.generate_story_image(hanzi, meaning_ru, actor, location, story)
-        if image_file:
-            image_tag = f'<img src="{os.path.basename(image_file)}">'
-            self.media_files.append(image_file)
+        # image_tag = ""
+        # image_file = self.generate_story_image(hanzi, meaning_ru, actor, location, story)
+        # if image_file:
+        #     image_tag = f'<img src="{os.path.basename(image_file)}">'
+        #     self.media_files.append(image_file)
 
         stroke_tag = ""
         stroke_image_result = self.create_stroke_image(hanzi)
@@ -449,12 +445,13 @@ class HanziSpacesGenerator:
             fields=[
                 hanzi, pinyin_text, colored_pinyin, meaning_en,
                 space, hint, audio_tag, story,
-                image_tag, stroke_tag,
+                # image_tag, stroke_tag,
+                stroke_tag
             ],
         )
         self.deck.add_note(note)
 
-        time.sleep(20)
+        time.sleep(1)
         return {"иероглиф": hanzi, "пиньинь": pinyin_text, "значение": meaning_en}
 
     def create_deck_from_file(self, input_hanzi, output_file=output_deck):

@@ -23,8 +23,8 @@ anki_deck_name = "DuChinese Hanzi Spaces with Actors (Русский)"
 output_deck = "duchinese_hanzi_spaces_actors_rus.apkg"
 
 # --- OpenAI и DALL-E Настройки ---
-OPENAI_IMAGE_MODEL = "dall-e-2"
-IMAGE_SIZE = "512x512"  # Размер изображения для DALL-E
+OPENAI_IMAGE_MODEL = "dall-e-3"
+IMAGE_SIZE = "1024x1024"  # Размер изображения для DALL-E
 
 
 
@@ -96,36 +96,38 @@ class AnkiDeckGenerator:
             f"КРАЙНЕ ВАЖНО: на изображении должна быть только сцена. Никаких иероглифов, слов, надписей, текста. Абсолютно чистое изображение."
         )
 
-    def generate_story_image(self, hanzi, meaning_ru, actor, location, story):
-        image_dir = "story_images"
-        os.makedirs(image_dir, exist_ok=True)
-        image_file_path = f"{image_dir}/{hanzi}_story.png"
-        if os.path.exists(image_file_path):
-            print(f"Image for {hanzi} already exists. Using existing.")
-            self.media_files.append(image_file_path)
-            return image_file_path
 
-        prompt = self._build_image_prompt(meaning_ru, actor, location, story)
-        try:
-            print(f"Generating image for {hanzi} based on your edited story...")
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            if not client.api_key: raise OpenAIError("Ключ OpenAI API не найден")
-            response = client.images.generate(model=OPENAI_IMAGE_MODEL, prompt=prompt, n=1, size=IMAGE_SIZE)
-            image_url = response.data[0].url
-            image_response = requests.get(image_url)
-            if image_response.status_code == 200:
-                with open(image_file_path, "wb") as f: f.write(image_response.content)
-                print(f"Successfully saved image for {hanzi}")
-                self.media_files.append(image_file_path)
-                print("Waiting 15 seconds to respect the rate limit...")
-                time.sleep(15)
-                return image_file_path
-        except Exception as e:
-            print(f"Error generating image for {hanzi} with DALL-E: {e}")
-            print("Waiting 15 seconds to respect the rate limit...")
-            time.sleep(15)
-        return None
+    # def generate_story_image(self, hanzi, meaning_ru, actor, location, story):
+    #     image_dir = "story_images"
+    #     os.makedirs(image_dir, exist_ok=True)
+    #     image_file_path = f"{image_dir}/{hanzi}_story.png"
+    #     if os.path.exists(image_file_path):
+    #         print(f"Image for {hanzi} already exists. Using existing.")
+    #         self.media_files.append(image_file_path)
+    #         return image_file_path
 
+    #     prompt = self._build_image_prompt(meaning_ru, actor, location, story)
+    #     try:
+    #         print(f"Generating image for {hanzi} based on your edited story...")
+    #         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    #         if not client.api_key: raise OpenAIError("Ключ OpenAI API не найден")
+    #         response = client.images.generate(model=OPENAI_IMAGE_MODEL, prompt=prompt, n=1, size=IMAGE_SIZE)
+    #         image_url = response.data[0].url
+    #         image_response = requests.get(image_url)
+    #         if image_response.status_code == 200:
+    #             with open(image_file_path, "wb") as f: f.write(image_response.content)
+    #             print(f"Successfully saved image for {hanzi}")
+    #             self.media_files.append(image_file_path)
+    #             print("Waiting 15 seconds to respect the rate limit...")
+    #             time.sleep(15)
+    #             return image_file_path
+    #     except Exception as e:
+    #         print(f"Error generating image for {hanzi} with DALL-E: {e}")
+    #         print("Waiting 15 seconds to respect the rate limit...")
+    #         time.sleep(15)
+    #     return None
+
+    
     # def generate_story_image(self, hanzi, meaning_ru, actor, location, story, anki_media_dir=None):
     #     """
     #     Generate an image using Replicate's API with Google Imagen 3 for a given hanzi,

@@ -16,14 +16,19 @@ import openai
 # anki_deck_name = "Vova chinese HSK1"
 # anki_deck_name = "DuChinese chinese HSK1"
 # anki_deck_name = "HSK3 trade bargain"
-anki_deck_name = "HSK3 Standard course"
+# anki_deck_name = "HSK3 Standard course"
+# anki_deck_name = "Parks"
+anki_deck_name = "昆明周二星期四"
 
 # anki_deck_name = "Ян Боровски - частотные слова"
 # output_deck = "vova_chinese_hsk1.apkg"
 # output_deck = "Duchinese_hsk1.apkg"
-output_deck = "HSK3_Standard_course.apkg"
+# output_deck = "HSK3_Standard_course.apkg"
 # output_deck = "HSK3_trade_bargain.apkg"
+output_deck = "2025.08.21.apkg"
+# output_deck = "parks.apkg"
 input_file = "chinese_words.txt"
+input_words_archive = "input_words_archive_2025.08.21"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"
@@ -65,7 +70,10 @@ class ChineseAnkiGenerator:
                 },
                 {
                     "name": "Production",
-                    "qfmt": '<div class="meaning">{{Meaning}}</div>',
+                    "qfmt": """
+                            <div class="meaning">{{Meaning}}</div>
+                            {{Audio}}
+                            """,
                     "afmt": """
                         <div class="meaning">{{Meaning}}</div>
                         <hr>
@@ -461,7 +469,7 @@ class ChineseAnkiGenerator:
         print(f"Created Anki deck: {output_file}")
 
         # Archive input file (your existing logic)
-        output_file_archive_path = "input_words_archive"
+        output_file_archive_path = input_words_archive
         if not os.path.exists(output_file_archive_path):
             os.makedirs(output_file_archive_path)
         output_filename = f'chinese_words_{datetime.now().strftime("%Y-%m-%d_%H_%M_%S")}.txt'
@@ -491,7 +499,7 @@ class ChineseAnkiGenerator:
         print(f"Created Anki deck: {output_file}")
 
         # copy inputs to archive
-        output_file_archive_path = "input_words_archive"
+        output_file_archive_path = input_words_archive
         output_filename = (
             f'chinese_words_{datetime.now().strftime("%Y-%m-%d_%H_%M_%S")}.txt'
         )
@@ -514,10 +522,10 @@ async def google_translate(word):
 
 def check_input_duplicates(input_file):
     new_input_words = []
-    files = os.listdir("input_words_archive") if os.path.exists("input_words_archive") else []
+    files = os.listdir(input_words_archive) if os.path.exists(input_words_archive) else []
     words = []
     for file in files:
-        with open(f"input_words_archive/{file}", "r", encoding="utf-8") as f:
+        with open(f"{input_words_archive}/{file}", "r", encoding="utf-8") as f:
             words += [line.strip().replace("\u200b", "") for line in f if line.strip()]
     with open(input_file, "r", encoding="utf-8") as f:
         input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
@@ -530,8 +538,8 @@ def check_input_duplicates(input_file):
 
     input_words = list(set(input_words))
     for word in input_words:
-        if not is_chinese_char(word):
-            raise ValueError(f"Invalid Chinese character: {word}")
+        # if not is_chinese_char(word):
+        #     raise ValueError(f"Invalid Chinese character: {word}")
         if word in words:
             print(f"Duplicate word: {word}")
         else:
@@ -545,8 +553,6 @@ def check_input_duplicates(input_file):
     return new_input_words
 
 def is_chinese_char(text):
-    if not text or len(text) == 0:
-        return False
     for char in text:
         code_point = ord(char)
         if not ((0x4E00 <= code_point <= 0x9FFF) or (0x3400 <= code_point <= 0x4DBF)):
