@@ -11,6 +11,8 @@ from hanziconv import HanziConv
 import json
 import random
 import openai
+import google.generativeai as genai
+from google.api_core import exceptions as google_exceptions
 
 
 # anki_deck_name = "Vova chinese HSK1"
@@ -18,20 +20,30 @@ import openai
 # anki_deck_name = "HSK3 trade bargain"
 # anki_deck_name = "HSK3 Standard course"
 # anki_deck_name = "Parks"
-anki_deck_name = "昆明周二星期四"
+# anki_deck_name = "昆明周二星期四"
+# anki_deck_name = "chinese daily podcast - Why You Still Can’t Speak Chinese?"
+anki_deck_name = "Roman words"
+# anki_deck_name = "美玲 说话"
 
 # anki_deck_name = "Ян Боровски - частотные слова"
 # output_deck = "vova_chinese_hsk1.apkg"
 # output_deck = "Duchinese_hsk1.apkg"
 # output_deck = "HSK3_Standard_course.apkg"
 # output_deck = "HSK3_trade_bargain.apkg"
-output_deck = "2025.08.21.apkg"
+# output_deck = "2025.08.21.apkg"
+# output_deck = "chinese_daily_podcast_cannot_speak_chinese.apkg"
+output_deck = "roman_words.apkg"
+# output_deck = "meiling_conversation.apkg"
 # output_deck = "parks.apkg"
 input_file = "chinese_words.txt"
-input_words_archive = "input_words_archive_2025.08.21"
+# input_words_archive = "input_words_archive_2025.08.21"
+# input_words_archive = "input_words_archive_chinese_daily_podcast"
+input_words_archive = "input_words_archive_chinese_roman"
+# input_words_archive = "input_words_archive_meiling"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"
+
 
 class ChineseAnkiGenerator:
     def __init__(self):
@@ -301,45 +313,113 @@ class ChineseAnkiGenerator:
     #         return None
 
 
-    def get_example_from_chatgpt(self, word):
-            """
-            Generate an example sentence using the word with translation via ChatGPT.
-            Ensures sentence is in Simplified Chinese with Russian translation.
-            """
-            print(f'{word=}')
+    # def get_example_from_chatgpt(self, word):
+    #         """
+    #         Generate an example sentence using the word with translation via ChatGPT.
+    #         Ensures sentence is in Simplified Chinese with Russian translation.
+    #         """
+    #         print(f'{word=}')
 
+    #         prompt = (
+    #             f"Provide one example sentence in Simplified Chinese that uses the word '{word}', "
+    #             "along with its Russian translation. Return the response in JSON format like this:\n"
+    #             "{\n  \"chinese\": \"<Simplified Chinese sentence>\",\n  \"meaning\": \"<Russian translation>\"\n}"
+    #         )
+    #         try:
+    #             client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    #             if not client.api_key: raise openai.OpenAIError("Ключ OpenAI API не найден")
+                
+    #             # The corrected line is here
+    #             response = client.chat.completions.create( 
+    #                 model="gpt-4",
+    #                 messages=[
+    #                     {"role": "system", "content": "You are a bilingual assistant skilled in Chinese and Russian."},
+    #                     {"role": "user", "content": prompt}
+    #                 ],
+    #                 temperature=0.7,
+    #                 max_tokens=150
+    #             )
+                
+    #             message_content = response.choices[0].message.content
+    #             # Attempt to parse the JSON-like response
+    #             example = json.loads(message_content.strip())
+    #             if "chinese" in example and "meaning" in example:
+    #                 return example
+    #             else:
+    #                 print("Unexpected format in ChatGPT response.")
+    #                 return None
+    #         except Exception as e:
+    #             print(f"Error generating example with ChatGPT: {e}")
+    #             return None
+
+
+    def get_example_from_gemini(self, word):
+        """
+        Generate an example sentence using the word with translation via Gemini.
+        Ensures sentence is in Simplified Chinese with Russian translation.
+        """
+        print(f'{word=}')
+
+        # Configure the Gemini API client with the API key from environment variables.
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            print("Error: GOOGLE_API_KEY environment variable not set.")
+            return None
+        genai.configure(api_key=api_key)
+
+        try:
+            # Create an instance of the GenerativeModel.
+            model = genai.GenerativeModel('gemini-1.5-pro-latest')
+            
+            # Define the prompt. The instructions for JSON format are still key.
             prompt = (
                 f"Provide one example sentence in Simplified Chinese that uses the word '{word}', "
-                "along with its Russian translation. Return the response in JSON format like this:\n"
+                "along with its Russian translation from Chinese. Return the response in JSON format like this:\n"
                 "{\n  \"chinese\": \"<Simplified Chinese sentence>\",\n  \"meaning\": \"<Russian translation>\"\n}"
+            )            
+
+            # Use GenerationConfig to specify a structured JSON output.
+            # This is more reliable than asking the model to format the text manually.
+            generation_config = {
+                "response_mime_type": "application/json",
+                "response_schema": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "chinese": {"type": "STRING"},
+                        "meaning": {"type": "STRING"}
+                    }
+                }
+            }
+
+            # Make the API call to generate content.
+            response = model.generate_content(
+                prompt,
+                generation_config=generation_config
             )
-            try:
-                client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-                if not client.api_key: raise openai.OpenAIError("Ключ OpenAI API не найден")
-                
-                # The corrected line is here
-                response = client.chat.completions.create( 
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a bilingual assistant skilled in Chinese and Russian."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=150
-                )
-                
-                message_content = response.choices[0].message.content
-                # Attempt to parse the JSON-like response
-                example = json.loads(message_content.strip())
+
+            # Access the structured content from the response and parse it.
+            # The response.text will contain the JSON string.
+            if response.text:
+                example = json.loads(response.text)
                 if "chinese" in example and "meaning" in example:
                     return example
                 else:
-                    print("Unexpected format in ChatGPT response.")
+                    print("Unexpected format in Gemini response.")
                     return None
-            except Exception as e:
-                print(f"Error generating example with ChatGPT: {e}")
+            else:
+                print("Gemini response was empty.")
                 return None
 
+        except google_exceptions.GoogleAPIError as e:
+            print(f"Error generating example with Gemini API: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON from Gemini response: {e}")
+            print(f"Response content: {response.text}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            return None
 
     def get_audio_from_forvo(self, word):
         """Get audio pronunciation from Forvo API"""
@@ -386,7 +466,8 @@ class ChineseAnkiGenerator:
         # Get example sentence
         try:
             # example = self.get_example_from_tatoeba(word)
-            example = self.get_example_from_chatgpt(word)
+            # example = self.get_example_from_chatgpt(word)
+            example = self.get_example_from_gemini(word)
             example_chinese = example["chinese"] if example else ""
             example_meaning = example["meaning"] if example else ""
             example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)

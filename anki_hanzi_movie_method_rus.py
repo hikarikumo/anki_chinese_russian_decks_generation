@@ -13,13 +13,22 @@ import json
 from datetime import datetime
 from openai import OpenAI
 from openai import OpenAIError
+import base64
+import http.client
+import google.generativeai as genai
+from google.api_core import exceptions as google_exceptions
 
-# input_file = "chinese_words_hanzi_movie_method.txt"
-input_file = "input_du_chinese_words_hanzi_movie_method.txt"
-output_file_archive_path = "input_words_du_chinese_hmm_archive"
 
-anki_deck_name = "DuChinese Hanzi Spaces with Actors (Русский)"
-output_deck = "duchinese_hanzi_spaces_actors_rus.apkg"
+input_file = "chinese_words_hanzi_movie_method.txt"
+# input_file = "input_du_chinese_words_hanzi_movie_method.txt"
+# output_file_archive_path = "input_words_du_chinese_hmm_archive"
+output_file_archive_path = "input_words_du_roman_hmm_archive"
+
+# anki_deck_name = "DuChinese Hanzi Spaces with Actors (Русский)"
+# output_deck = "duchinese_hanzi_spaces_actors_rus.apkg"
+anki_deck_name = "Roman class Hanzi Spaces with Actors (Русский)"
+output_deck = "roman_class_hanzi_spaces_actors_rus.apkg"
+
 
 # --- Constants for OpenAI ---
 OPENAI_MODEL = "gpt-4o-mini"
@@ -322,38 +331,38 @@ class HanziSpacesGenerator:
             print(f"Ошибка при загрузке аудио для {hanzi}: {e}")
         return None
 
-    def _build_hanzi_story_prompt(self, hanzi, primary_meaning, actor, location, components_str):
-        return f"""
-        Создай яркую, абсурдную и запоминающуюся историю по методу Hanzi Movie Method для изучения китайского иероглифа.
-        Данные:
-        - Иероглиф: {hanzi}, Значение: {primary_meaning}
-        - Место действия: {location}, Главный герой: {actor}
-        - Компоненты иероглифа: {components_str}
-        Требования:
-        - История должна быть короткой (1-2 предложения), легко запоминаемой и связывать все элементы.
-        - Важно! История должна быть напрямую связана со значением компонентов иероглифа.
-        - Пиши на русском языке.
-        """
+    # def _build_hanzi_story_prompt(self, hanzi, primary_meaning, actor, location, components_str):
+    #     return f"""
+    #     Создай яркую, абсурдную и запоминающуюся историю по методу Hanzi Movie Method для изучения китайского иероглифа.
+    #     Данные:
+    #     - Иероглиф: {hanzi}, Значение: {primary_meaning}
+    #     - Место действия: {location}, Главный герой: {actor}
+    #     - Компоненты иероглифа: {components_str}
+    #     Требования:
+    #     - История должна быть короткой (1-2 предложения), легко запоминаемой и связывать все элементы.
+    #     - Важно! История должна быть напрямую связана со значением компонентов иероглифа.
+    #     - Пиши на русском языке.
+    #     """
 
-    # --- FIXED: Corrected function signature and logic ---
-    def generate_hanzi_movie_story(self, hanzi, meaning, actor, location, hint):
-        primary_meaning = self.components_db.parse_separated_values(meaning)[0] if meaning else "нечто"
-        prompt = self._build_hanzi_story_prompt(hanzi, primary_meaning, actor, location, hint)
-        try:
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            if not client.api_key: raise OpenAIError("Ключ OpenAI API не найден")
-            response = client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=[
-                    {"role": "system", "content": "Ты креативный помощник для создания мнемонических историй."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=OPENAI_MAX_TOKENS, temperature=OPENAI_TEMPERATURE
-            )
-            return response.choices[0].message.content.strip()
-        except OpenAIError as e:
-            print(f"Ошибка при вызове OpenAI API для {hanzi}: {e}")
-            return f"{actor} в {location} видит иероглиф {hanzi} и вспоминает '{primary_meaning}'."
+    # # --- FIXED: Corrected function signature and logic ---
+    # def generate_hanzi_movie_story(self, hanzi, meaning, actor, location, hint):
+    #     primary_meaning = self.components_db.parse_separated_values(meaning)[0] if meaning else "нечто"
+    #     prompt = self._build_hanzi_story_prompt(hanzi, primary_meaning, actor, location, hint)
+    #     try:
+    #         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    #         if not client.api_key: raise OpenAIError("Ключ OpenAI API не найден")
+    #         response = client.chat.completions.create(
+    #             model=OPENAI_MODEL,
+    #             messages=[
+    #                 {"role": "system", "content": "Ты креативный помощник для создания мнемонических историй."},
+    #                 {"role": "user", "content": prompt}
+    #             ],
+    #             max_tokens=OPENAI_MAX_TOKENS, temperature=OPENAI_TEMPERATURE
+    #         )
+    #         return response.choices[0].message.content.strip()
+    #     except OpenAIError as e:
+    #         print(f"Ошибка при вызове OpenAI API для {hanzi}: {e}")
+    #         return f"{actor} в {location} видит иероглиф {hanzi} и вспоминает '{primary_meaning}'."
 
     # def _build_image_prompt(self, hanzi, primary_meaning, actor, location, story):
     #     """
@@ -401,6 +410,118 @@ class HanziSpacesGenerator:
     #         print(f"Error generating image for {hanzi} with DALL-E: {e}")
     #     return None
 
+    def _build_hanzi_story_prompt(self, hanzi, primary_meaning, actor, location, components_str):
+        """
+        Создает промпт для генерации истории.
+        """
+        return f"""
+        Создай яркую, абсурдную и запоминающуюся историю по методу Hanzi Movie Method для изучения китайского иероглифа.
+        Данные:
+        - Иероглиф: {hanzi}, Значение: {primary_meaning}
+        - Место действия: {location}, Главный герой: {actor}
+        - Компоненты иероглифа: {components_str}
+        Требования:
+        - История должна быть короткой (1-2 предложения), легко запоминаемой и связывать все элементы.
+        - Важно! История должна быть напрямую связана со значением компонентов иероглифа.
+        - Пиши на русском языке.
+        """
+
+    def generate_hanzi_movie_story_gemini(self, hanzi, meaning, actor, location, hint):
+        """
+        Генерирует мнемоническую историю с использованием Gemini API.
+        """
+        primary_meaning = meaning.split(',')[0] if meaning else "нечто"
+        prompt = self._build_hanzi_story_prompt(hanzi, primary_meaning, actor, location, hint)
+        try:
+            model = genai.GenerativeModel('gemini-1.5-pro-latest')
+            response = model.generate_content(
+                prompt,
+                generation_config={
+                    'max_output_tokens': 150,
+                    'temperature': 0.7
+                }
+            )
+            return response.text.strip()
+        except google_exceptions.GoogleAPIError as e:
+            print(f"Ошибка при вызове Gemini API для {hanzi}: {e}")
+            return f"{actor} в {location} видит иероглиф {hanzi} и вспоминает '{primary_meaning}'."
+        except Exception as e:
+            print(f"Неожиданная ошибка при генерации истории: {e}")
+            return None
+
+    def _build_image_prompt(self, hanzi, primary_meaning, actor, location, story):
+        """
+        Создает промпт для генерации изображения.
+        """
+        return (
+            f"Фотореалистичное изображение, кинематографический свет, высокая детализация. "
+            f"Сцена, основанная на истории: '{story}'.\n"
+            f"На сцене находятся: {actor} в локации '{location}'. "
+            f"Изображение иллюстрирует идею '{primary_meaning}'.\n\n"
+            f"КРАЙНЕ ВАЖНО: на изображении должна быть только сцена. Никаких букв, слов, надписей, текста, символов или логотипов. Абсолютно чистое изображение."
+        )
+
+    def generate_story_image_gemini(self, hanzi, meaning_ru, actor, location, story):
+        """
+        Генерирует и сохраняет изображение для истории с использованием Gemini API.
+        """
+        image_dir = "story_images"
+        os.makedirs(image_dir, exist_ok=True)
+        image_file_path = f"{image_dir}/{hanzi}_story.png"
+        if os.path.exists(image_file_path):
+            print(f"Изображение для {hanzi} уже существует. Пропускаю генерацию.")
+            return image_file_path
+
+        primary_meaning_ru = meaning_ru.split(',')[0] if meaning_ru else ""
+        prompt = self._build_image_prompt(hanzi, primary_meaning_ru, actor, location, story)
+
+        try:
+            print(f"Генерирую изображение для {hanzi}...")
+            
+            if not self.gcp_project_id:
+                raise ValueError("GCP_PROJECT_ID environment variable is not set.")
+
+            payload = {
+                "instances": {
+                    "prompt": prompt
+                },
+                "parameters": {
+                    "sampleCount": 1
+                }
+            }
+            
+            headers = {
+                "Content-Type": "application/json",
+            }
+
+            conn = http.client.HTTPSConnection("us-central1-aiplatform.googleapis.com")
+            url = f"/v1/projects/{self.gcp_project_id}/locations/us-central1/publishers/google/models/imagen-3.0-generate-002:predict?key={self.api_key}"
+
+            conn.request("POST", url, json.dumps(payload), headers)
+            response = conn.getresponse()
+            data = response.read()
+            conn.close()
+
+            result = json.loads(data)
+            if response.status != 200:
+                print(f"Ошибка API: {result.get('error', {}).get('message', 'Неизвестная ошибка')}")
+                return None
+
+            predictions = result.get('predictions')
+            if not predictions or not predictions[0].get('bytesBase64Encoded'):
+                print("В ответе API не найдено изображение.")
+                return None
+
+            image_data = base64.b64decode(predictions[0]['bytesBase64Encoded'])
+            with open(image_file_path, "wb") as f:
+                f.write(image_data)
+            print(f"Успешно сохранено изображение для {hanzi} в {image_file_path}")
+            return image_file_path
+
+        except Exception as e:
+            print(f"Ошибка при генерации изображения с Gemini: {e}")
+        return None
+
     def process_hanzi(self, hanzi):
         hanzi = HanziConv.toSimplified(hanzi)
         print(f"Обрабатываем: {hanzi}")
@@ -422,10 +543,12 @@ class HanziSpacesGenerator:
         actor = actor_match.group(1) if actor_match else "Неизвестный актер"
         location = actor_match.group(2) if actor_match else "Неизвестное место"
         
-        story = self.generate_hanzi_movie_story(hanzi, meaning_ru, actor, location, hint)
+        # story = self.generate_hanzi_movie_story(hanzi, meaning_ru, actor, location, hint)
+        story = self.generate_hanzi_movie_story_gemini(hanzi, meaning_ru, actor, location, hint)
         
         # image_tag = ""
-        # image_file = self.generate_story_image(hanzi, meaning_ru, actor, location, story)
+        # # image_file = self.generate_story_image(hanzi, meaning_ru, actor, location, story)
+        # image_file = self.generate_story_image_gemini(hanzi, meaning_ru, actor, location, story)
         # if image_file:
         #     image_tag = f'<img src="{os.path.basename(image_file)}">'
         #     self.media_files.append(image_file)
