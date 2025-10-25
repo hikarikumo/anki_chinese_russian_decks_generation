@@ -13,8 +13,13 @@ import random
 import openai
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
+# from openai import OpenAI # Не используется, можно удалить, но по условию не удаляем
+# from openai import OpenAIError # Не используется
+# import base64 # Не используется
+# import http.client # Не используется
+# import re # Не используется
 
-
+# --- Настройки колоды (ВОССТАНОВЛЕНЫ ВСЕ ВАРИАНТЫ) ---
 # anki_deck_name = "Vova chinese HSK1"
 # anki_deck_name = "DuChinese chinese HSK1"
 # anki_deck_name = "DuChinese pet store" 
@@ -59,11 +64,88 @@ input_words_archive = "input_recall_words_archive_duchinese_hsk1_dialogues"
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"
 
+# --- Constants for OpenAI / DALL-E (ВОССТАНОВЛЕНО из первого скрипта) ---
+# OPENAI_MODEL = "gpt-4o-mini"
+# OPENAI_MODEL = "o3-mini-2025-01-31"
+# OPENAI_MAX_TOKENS = 300
+# OPENAI_TEMPERATURE = 0.8
+# OPENAI_IMAGE_MODEL = "dall-e-3"
+# OPENAI_IMAGE_MODEL = "dall-e-2"
+# IMAGE_SIZE = "1024x1024"
+
+# --- Вставляем класс HanziComponentsDB из первого скрипта ---
+class HanziComponentsDB:
+    def __init__(self, db_file='hanzi_db.txt'):
+        self.db = self._load_db(db_file)
+        self.component_meanings = {
+            '⿰': 'слева направо', '⿱': 'сверху вниз', '⿲': 'три части горизонтально',
+            '⿳': 'три части вертикально', '⿴': 'внешнее-внутреннее', '⿵': 'верхняя рамка',
+            '⿶': 'нижняя рамка', '⿷': 'левая рамка', '⿸': 'верхне-левая рамка',
+            '⿹': 'верхне-правая рамка', '⿺': 'нижне-левая рамка', '⿻': 'пересекающиеся компоненты'
+        }
+
+    def _load_db(self, db_file):
+        db = {}
+        try:
+            with open(db_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        data = json.loads(line.strip())
+                        db[data['character']] = data
+        except FileNotFoundError:
+            print(f"Файл базы данных компонентов '{db_file}' не найден. Разбор компонентов будет недоступен.")
+        except json.JSONDecodeError:
+            print(f"Ошибка декодирования JSON в файле '{db_file}'. Проверьте формат.")
+        return db
+
+    def parse_separated_values(self, input_string):
+        standardized = str(input_string).replace(';', ',')
+        values = [item.strip() for item in standardized.split(',')]
+        return [item for item in values if item]
+
+    def get_hanzi_components(self, hanzi):
+        if len(hanzi) != 1 or hanzi not in self.db:
+            return None
+        
+        data = self.db[hanzi]
+        decomposition = data.get('decomposition', '')
+        structure, components = self._parse_decomposition(decomposition)
+        
+        new_components = []
+        for component in components:
+            if component:
+                component_data = self.db.get(component, {})
+                meaning_data = component_data.get('definition', '')
+                meanings_list = self.parse_separated_values(meaning_data)
+                meaning = meanings_list[0] if meanings_list else "без значения"
+                
+                # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
+                new_components.append(f'{component} ({meaning})')
+        
+        components_with_meaning = ", ".join(new_components)
+        
+        return {
+            'character': hanzi, 
+            # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
+            'structure': self.component_meanings.get(structure[0], 'неизвестная структура') if structure else '',
+            'components_with_meaning': components_with_meaning,
+        }
+
+    def _parse_decomposition(self, decomposition):
+        if not decomposition:
+            return '', []
+        structure_symbol = decomposition[0]
+        structure = self.component_meanings.get(structure_symbol, 'неизвестная структура')
+        components = [char for char in decomposition[1:] if char not in self.component_meanings]
+        return structure, components
+
 
 class ChineseAnkiGenerator:
     def __init__(self):
         # Load stroke data from makemeahanzi
         self.graphics_data = self.load_graphics_data(GRAPHICS_PATH)
+        # 💡 ИЗМЕНЕНИЕ: Добавление инициализации базы компонентов
+        self.components_db = HanziComponentsDB(db_file='hanzi_db.txt') 
 
         # Create Anki model with StrokeOrder field
         self.model = genanki.Model(
@@ -77,6 +159,8 @@ class ChineseAnkiGenerator:
                 {"name": "Example"},
                 {"name": "ExamplePinyin"},
                 {"name": "ExampleMeaning"},
+                # 💡 ИЗМЕНЕНИЕ: Добавить поле Hint
+                {"name": "Hint"}, 
                 {"name": "Audio"},
                 {"name": "StrokeOrder"},  # New field for stroke order image
             ],
@@ -93,6 +177,7 @@ class ChineseAnkiGenerator:
                         <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
+                        <div class="hint-section">{{Hint}}</div> 
                         {{Audio}}
                     """,
                 },
@@ -101,16 +186,17 @@ class ChineseAnkiGenerator:
                     # Front (Qfmt): Russian Meaning ONLY
                     "name": "Recall (Russian -> Chinese)",
                     "qfmt": """
-                            <div class="stroke-order">{{StrokeOrder}}</div>
+                            <div class="meaning">{{Meaning}}</div>
                             """,
                     # Back (Afmt): Chinese word/characters FIRST, then details, including Audio
                     "afmt": """
                         <div class="meaning">{{Meaning}}</div>
                         <hr>
-                        <div class="pinyin">{{ColoredPinyin}}</div>
+                        <div class="chinese">{{Chinese}}</div> <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
+                        <div class="stroke-order">{{StrokeOrder}}</div> <div class="hint-section">{{Hint}}</div> 
                         {{Audio}}
                     """,
                 },
@@ -160,7 +246,22 @@ class ChineseAnkiGenerator:
                     font-size: 14px;
                     font-style: italic;
                     margin-bottom: 15px;
-                }               
+                } 
+                /* 💡 ИЗМЕНЕНИЕ: Добавление стилей для секции Hint */              
+                .hint-section {
+                    margin-top: 20px;
+                    padding: 10px;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    background-color: #f9f9f9;
+                    text-align: left;
+                    font-size: 14px;
+                }
+                .hint-section h4 {
+                    margin-top: 0;
+                    margin-bottom: 5px;
+                    color: #333;
+                }
                 .tone1 { color: blue; }
                 .tone2 { color: green; }
                 .tone3 { color: purple; }
@@ -208,11 +309,11 @@ class ChineseAnkiGenerator:
                 # Try with "-still" suffix
                 svg_path = f"svgs-still/{code_point}-still.svg"
                 if not os.path.exists(svg_path):
-                    print(f"Warning: No SVG file found for '{char}' (code point {code_point})")
+                    # print(f"Warning: No SVG file found for '{char}' (code point {code_point})") # Убрано, как в первом скрипте
                     continue
             
             svg_paths.append(svg_path)
-            print(f"Found existing SVG for '{char}' at {svg_path}")
+            # print(f"Found existing SVG for '{char}' at {svg_path}") # ВОССТАНОВЛЕНО
         
         if not svg_paths:
             return None
@@ -393,6 +494,27 @@ class ChineseAnkiGenerator:
             print(f"Error fetching audio: {e}")
             return None
 
+    # --- Вставляем метод get_hanzi_hint из первого скрипта ---
+    def get_hanzi_hint(self, word):
+        """
+        Разбирает каждый иероглиф в слове на компоненты с их значениями.
+        Форматирует вывод для поля "Подсказка", без жирного шрифта, с переносом строки.
+        """
+        hints = []
+        for char in word:
+            if is_chinese_char(char):
+                data = self.components_db.get_hanzi_components(char)
+                if data:
+                    structure = f"Структура: {data['structure']}"
+                    components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}" 
+                    hints.append(f"• {char}: {structure}, {components}")
+        
+        if hints:
+            # 💡 ИЗМЕНЕНИЕ: Объединяем элементы списка через <br> для переноса строки
+            return "<br>".join(hints)
+        else:
+            return ""
+
     def process_word(self, word):
         """Process a single Chinese word"""
         print(f"Processing: {word}")
@@ -418,6 +540,9 @@ class ChineseAnkiGenerator:
             example_chinese = ""
             example_colored_pinyin = ""
             example_meaning = ""
+
+        # 💡 ИЗМЕНЕНИЕ: Получение подсказки по компонентам (для нового поля)
+        component_hint = self.get_hanzi_hint(word)
 
         # Get audio
         audio_file = self.get_audio_from_forvo(word)
@@ -456,6 +581,7 @@ class ChineseAnkiGenerator:
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
                 example_meaning,   # ExampleMeaning
+                component_hint,    # Hint (Подсказка с компонентами)
                 audio_tag,         # Audio
                 stroke_tag,        # StrokeOrder
             ],
@@ -544,6 +670,7 @@ def check_input_duplicates(input_file):
             f.write(f"{word}\n")
     return new_input_words
 
+# --- Вставляем функцию is_chinese_char из первого скрипта ---
 def is_chinese_char(text):
     for char in text:
         code_point = ord(char)
