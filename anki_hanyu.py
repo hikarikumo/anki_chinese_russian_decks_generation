@@ -492,9 +492,7 @@ class ChineseAnkiGenerator:
                 data = self.components_db.get_hanzi_components(char)
                 if data:
                     structure = f"Структура: {data['structure']}"
-                    # Удаляем \n, если он был добавлен ранее
                     components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}" 
-                    # 💡 ИЗМЕНЕНИЕ: Форматирование строки, без лишних символов
                     hints.append(f"• {char}: {structure}, {components}")
         
         if hints:
