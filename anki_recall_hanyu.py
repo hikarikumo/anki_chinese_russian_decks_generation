@@ -13,22 +13,18 @@ import random
 import openai
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
-from openai import OpenAI
-from openai import OpenAIError
-import base64
-import http.client
-import re
 
-# --- Настройки колоды (ВОССТАНОВЛЕНЫ ВСЕ ВАРИАНТЫ) ---
+
 # anki_deck_name = "Vova chinese HSK1"
 # anki_deck_name = "DuChinese chinese HSK1"
 # anki_deck_name = "DuChinese pet store" 
 # anki_deck_name = "DuChinese Butterfly lovers"
-anki_deck_name = "DuChinese hsk1 dialogues"
+anki_deck_name = "recall_DuChinese hsk1 dialogues"
 # anki_deck_name = "MandarinBean hsk2"
 # anki_deck_name = "HSK3 trade bargain"
 # anki_deck_name = "HSK3 Standard course"
 # anki_deck_name = "Parks"
+# anki_deck_name = "昆明周二星期四"
 # anki_deck_name = "chinese daily podcast - Why You Still Can’t Speak Chinese?"
 # anki_deck_name = "Roman words"
 # anki_deck_name = "Chinese Pod Newbie"
@@ -39,7 +35,7 @@ anki_deck_name = "DuChinese hsk1 dialogues"
 # output_deck = "Duchinese_hsk1.apkg"
 # output_deck = "Duchinese_pet_store.apkg"
 # output_deck = "Duchinese_butterfly_lovers.apkg"
-output_deck = "DuChinese_hsk1_dialogues.apkg"
+output_deck = "recall_DuChinese_hsk1_dialogues.apkg"
 # output_deck = "MandarinBean_hsk2.apkg"
 # output_deck = "HSK3_Standard_course.apkg"
 # output_deck = "HSK3_trade_bargain.apkg"
@@ -57,92 +53,17 @@ input_file = "chinese_words.txt"
 # input_words_archive = "input_words_archive_meiling"
 # input_words_archive = "input_words_archive_duchinese_pet_store"
 # input_words_archive = "input_words_archive_duchinese_butterfly_lovers"
-input_words_archive = "input_words_archive_duchinese_hsk1_dialogues"
+input_words_archive = "input_recall_words_archive_duchinese_hsk1_dialogues"
 # input_words_archive = "input_words_archive_mandarinbean_hsk2"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"
-
-# --- Constants for OpenAI / DALL-E (ВОССТАНОВЛЕНО) ---
-OPENAI_MODEL = "gpt-4o-mini"
-# OPENAI_MODEL = "o3-mini-2025-01-31"
-OPENAI_MAX_TOKENS = 300
-OPENAI_TEMPERATURE = 0.8
-OPENAI_IMAGE_MODEL = "dall-e-3"
-# OPENAI_IMAGE_MODEL = "dall-e-2"
-IMAGE_SIZE = "1024x1024"
-
-class HanziComponentsDB:
-    def __init__(self, db_file='hanzi_db.txt'):
-        self.db = self._load_db(db_file)
-        self.component_meanings = {
-            '⿰': 'слева направо', '⿱': 'сверху вниз', '⿲': 'три части горизонтально',
-            '⿳': 'три части вертикально', '⿴': 'внешнее-внутреннее', '⿵': 'верхняя рамка',
-            '⿶': 'нижняя рамка', '⿷': 'левая рамка', '⿸': 'верхне-левая рамка',
-            '⿹': 'верхне-правая рамка', '⿺': 'нижне-левая рамка', '⿻': 'пересекающиеся компоненты'
-        }
-
-    def _load_db(self, db_file):
-        db = {}
-        try:
-            with open(db_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip():
-                        data = json.loads(line.strip())
-                        db[data['character']] = data
-        except FileNotFoundError:
-            print(f"Файл базы данных компонентов '{db_file}' не найден. Разбор компонентов будет недоступен.")
-        except json.JSONDecodeError:
-            print(f"Ошибка декодирования JSON в файле '{db_file}'. Проверьте формат.")
-        return db
-
-    def parse_separated_values(self, input_string):
-        standardized = str(input_string).replace(';', ',')
-        values = [item.strip() for item in standardized.split(',')]
-        return [item for item in values if item]
-
-    def get_hanzi_components(self, hanzi):
-        if len(hanzi) != 1 or hanzi not in self.db:
-            return None
-        
-        data = self.db[hanzi]
-        decomposition = data.get('decomposition', '')
-        structure, components = self._parse_decomposition(decomposition)
-        
-        new_components = []
-        for component in components:
-            if component:
-                component_data = self.db.get(component, {})
-                meaning_data = component_data.get('definition', '')
-                meanings_list = self.parse_separated_values(meaning_data)
-                meaning = meanings_list[0] if meanings_list else "без значения"
-                
-                # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
-                new_components.append(f'{component} ({meaning})')
-        
-        components_with_meaning = ", ".join(new_components)
-        
-        return {
-            'character': hanzi, 
-            # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
-            'structure': self.component_meanings.get(structure[0], 'неизвестная структура') if structure else '',
-            'components_with_meaning': components_with_meaning,
-        }
-
-    def _parse_decomposition(self, decomposition):
-        if not decomposition:
-            return '', []
-        structure_symbol = decomposition[0]
-        structure = self.component_meanings.get(structure_symbol, 'неизвестная структура')
-        components = [char for char in decomposition[1:] if char not in self.component_meanings]
-        return structure, components
 
 
 class ChineseAnkiGenerator:
     def __init__(self):
         # Load stroke data from makemeahanzi
         self.graphics_data = self.load_graphics_data(GRAPHICS_PATH)
-        self.components_db = HanziComponentsDB(db_file='hanzi_db.txt') 
 
         # Create Anki model with StrokeOrder field
         self.model = genanki.Model(
@@ -156,41 +77,40 @@ class ChineseAnkiGenerator:
                 {"name": "Example"},
                 {"name": "ExamplePinyin"},
                 {"name": "ExampleMeaning"},
-                {"name": "Hint"}, 
                 {"name": "Audio"},
-                {"name": "StrokeOrder"},
+                {"name": "StrokeOrder"},  # New field for stroke order image
             ],
             templates=[
                 {
+                    # 1. Recognition (Chinese -> Russian) - Default style
                     "name": "Recognition (Chinese -> Russian)",
-                    "qfmt": '<div class="chinese">{{Chinese}}</div><div class="stroke-order">{{StrokeOrder}}</div>',
+                    "qfmt": '<div class="meaning">{{Meaning}}</div>',
                     "afmt": """
-                        <div class="stroke-order">{{StrokeOrder}}</div>
-                        <hr>
-                        <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="meaning">{{Meaning}}</div>
+                        <hr>
+                        <div class="stroke-order">{{StrokeOrder}}</div>
+                        <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
-                        <div class="hint-section">{{Hint}}</div> 
                         {{Audio}}
                     """,
                 },
                 {
+                    # 2. Recall (Russian -> Chinese) - As explicitly requested
+                    # Front (Qfmt): Russian Meaning ONLY
                     "name": "Recall (Russian -> Chinese)",
                     "qfmt": """
-                            <div class="meaning">{{Meaning}}</div>
+                            <div class="stroke-order">{{StrokeOrder}}</div>
                             """,
+                    # Back (Afmt): Chinese word/characters FIRST, then details, including Audio
                     "afmt": """
                         <div class="meaning">{{Meaning}}</div>
                         <hr>
-                        <div class="chinese">{{Chinese}}</div>
                         <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
-                        <div class="stroke-order">{{StrokeOrder}}</div>
-                        <div class="hint-section">{{Hint}}</div> 
                         {{Audio}}
                     """,
                 },
@@ -225,6 +145,7 @@ class ChineseAnkiGenerator:
                 }
                 .meaning {
                     font-size: 20px;
+                    font-weight: bold;
                     margin-bottom: 15px;
                 }
                 .example {
@@ -235,26 +156,10 @@ class ChineseAnkiGenerator:
                 .example-pinyin {
                     font-size: 14px;
                 }
-                .example-meaning { 
-                    font-size: 16px; 
-                    font-style: italic; 
-                    margin-bottom: 15px;
-                    color: #555;
-                }
-                .hint-section {
-                    margin-top: 20px;
-                    padding: 10px;
-                    border: 1px solid #ccc;
-                    border-radius: 5px;
-                    background-color: #f9f9f9;
-                    text-align: left;
+                .example-meaning {
                     font-size: 14px;
-                }
-                /* 💡 ИЗМЕНЕНИЕ: Убран жирный шрифт из заголовка подсказки */
-                .hint-section h4 {
-                    margin-top: 0;
-                    margin-bottom: 5px;
-                    color: #333;
+                    font-style: italic;
+                    margin-bottom: 15px;
                 }               
                 .tone1 { color: blue; }
                 .tone2 { color: green; }
@@ -303,11 +208,11 @@ class ChineseAnkiGenerator:
                 # Try with "-still" suffix
                 svg_path = f"svgs-still/{code_point}-still.svg"
                 if not os.path.exists(svg_path):
-                    # print(f"Warning: No SVG file found for '{char}' (code point {code_point})") 
+                    print(f"Warning: No SVG file found for '{char}' (code point {code_point})")
                     continue
             
             svg_paths.append(svg_path)
-            # print(f"Found existing SVG for '{char}' at {svg_path}") # ВОССТАНОВЛЕНО
+            print(f"Found existing SVG for '{char}' at {svg_path}")
         
         if not svg_paths:
             return None
@@ -350,6 +255,7 @@ class ChineseAnkiGenerator:
 
     def get_dictionary_data(self, word):
         """Get dictionary data using Google Translate API with fallbacks"""
+        # (UNCHANGED as requested)
         try:
             result = asyncio.run(google_translate(word))
             if result:
@@ -396,7 +302,7 @@ class ChineseAnkiGenerator:
         Generate an example sentence using the word with translation via Gemini.
         Ensures sentence is in Simplified Chinese with Russian translation.
         """
-        # print(f'{word=}') # ВОССТАНОВЛЕНО
+        print(f'{word=}')
 
         # Configure the Gemini API client with the API key from environment variables.
         api_key = os.getenv("GOOGLE_API_KEY")
@@ -406,14 +312,17 @@ class ChineseAnkiGenerator:
         genai.configure(api_key=api_key)
 
         try:
+            # Using a stable, generally available model 
             model = genai.GenerativeModel('gemini-2.5-pro') 
             
+            # Define the prompt. The instructions for JSON format are still key.
             prompt = (
                 f"Provide one example sentence in Simplified Chinese that uses the word '{word}', "
                 "along with its Russian translation from Chinese. Return the response in JSON format like this:\n"
                 "{\n  \"chinese\": \"<Simplified Chinese sentence>\",\n  \"meaning\": \"<Russian translation>\"\n}"
             )            
 
+            # Use GenerationConfig to specify a structured JSON output.
             generation_config = {
                 "response_mime_type": "application/json",
                 "response_schema": {
@@ -425,11 +334,13 @@ class ChineseAnkiGenerator:
                 }
             }
 
+            # Make the API call to generate content.
             response = model.generate_content(
                 prompt,
                 generation_config=generation_config
             )
 
+            # Access the structured content from the response and parse it.
             if response.text:
                 example = json.loads(response.text)
                 if "chinese" in example and "meaning" in example:
@@ -446,7 +357,7 @@ class ChineseAnkiGenerator:
             return None
         except json.JSONDecodeError as e:
             print(f"Error parsing JSON from Gemini response: {e}")
-            print(f"Response content: {response.text}") # ВОССТАНОВЛЕНО
+            print(f"Response content: {response.text}")
             return None
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
@@ -454,6 +365,7 @@ class ChineseAnkiGenerator:
 
     def get_audio_from_forvo(self, word):
         """Get audio pronunciation from Forvo API"""
+        # (Your existing implementation remains unchanged)
         audio_dir = "forvo_audio"
         if not os.path.exists(audio_dir):
             os.makedirs(audio_dir)
@@ -481,28 +393,6 @@ class ChineseAnkiGenerator:
             print(f"Error fetching audio: {e}")
             return None
 
-    def get_hanzi_hint(self, word):
-        """
-        Разбирает каждый иероглиф в слове на компоненты с их значениями.
-        Форматирует вывод для поля "Подсказка", без жирного шрифта, с переносом строки.
-        """
-        hints = []
-        for char in word:
-            if is_chinese_char(char):
-                data = self.components_db.get_hanzi_components(char)
-                if data:
-                    structure = f"Структура: {data['structure']}"
-                    # Удаляем \n, если он был добавлен ранее
-                    components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}" 
-                    # 💡 ИЗМЕНЕНИЕ: Форматирование строки, без лишних символов
-                    hints.append(f"• {char}: {structure}, {components}")
-        
-        if hints:
-            # 💡 ИЗМЕНЕНИЕ: Объединяем элементы списка через <br> для переноса строки
-            return "<br>".join(hints)
-        else:
-            return ""
-
     def process_word(self, word):
         """Process a single Chinese word"""
         print(f"Processing: {word}")
@@ -524,17 +414,11 @@ class ChineseAnkiGenerator:
             example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
             example_colored_pinyin = self.color_pinyin(example_pinyin_text)
         except Exception as e:
-            # print(f"Error fetching example: {e}") # ВОССТАНОВЛЕНО
+            print(f"Error fetching example: {e}")
             example_chinese = ""
             example_colored_pinyin = ""
             example_meaning = ""
 
-        # Получение подсказки по компонентам (для нового поля)
-        component_hint = self.get_hanzi_hint(word)
-        
-        # 💡 ИЗМЕНЕНИЕ: Поле ExampleMeaning теперь содержит только перевод примера, без префикса "Значение примера:"
-        final_example_meaning = f"{example_meaning}" if example_meaning else ""
-        
         # Get audio
         audio_file = self.get_audio_from_forvo(word)
         audio_tag = f"[sound:{os.path.basename(audio_file)}]" if audio_file and os.path.exists(audio_file) else ""
@@ -571,8 +455,7 @@ class ChineseAnkiGenerator:
                 meaning,           # Meaning
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
-                final_example_meaning,   # ExampleMeaning (Только перевод примера)
-                component_hint,    # Hint (Подсказка с компонентами)
+                example_meaning,   # ExampleMeaning
                 audio_tag,         # Audio
                 stroke_tag,        # StrokeOrder
             ],
@@ -616,16 +499,16 @@ class ChineseAnkiGenerator:
                 f"{output_file_archive_path}/{output_filename}", "w", encoding="utf-8"
             ) as f2:
                 f2.write(f.read())
-        
         with open(input_file, "w", encoding="utf-8") as f:
             f.write("")
         print(f"Archived input file: {output_file_archive_path}/{output_filename}")
 
         return results
 
+# 💡 UNCHANGED: This function remains as requested.
 async def google_translate(word):
     translator = Translator()
-    translation = await translator.translate(word, src="zh-cn", dest="ru") 
+    translation = await translator.translate(word, src="zh-cn", dest="ru")
     if translation and translation.text:
         return translation.text.capitalize()
 
@@ -639,8 +522,16 @@ def check_input_duplicates(input_file):
     with open(input_file, "r", encoding="utf-8") as f:
         input_words = [line.strip().replace("\u200b", "") for line in f if line.strip()]
 
+    # output_file = f"input_words_archive/chinese_words_{datetime.now().strftime('%Y-%m-%d_%H_%M_%S')}.txt"
+    # with open(output_file, "w", encoding="utf-8") as f:
+    #     for word in words:
+    #         f.write(f"{word}\n")
+    # print(f"Found {len(words)} words in archive")
+
     input_words = list(set(input_words))
     for word in input_words:
+        # if not is_chinese_char(word):
+        #     raise ValueError(f"Invalid Chinese character: {word}")
         if word in words:
             print(f"Duplicate word: {word}")
         else:

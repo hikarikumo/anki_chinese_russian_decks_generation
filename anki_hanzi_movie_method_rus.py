@@ -22,12 +22,14 @@ from google.api_core import exceptions as google_exceptions
 input_file = "chinese_words_hanzi_movie_method.txt"
 # input_file = "input_du_chinese_words_hanzi_movie_method.txt"
 # output_file_archive_path = "input_words_du_chinese_hmm_archive"
-output_file_archive_path = "input_words_du_roman_hmm_archive"
+# output_file_archive_path = "input_words_du_roman_hmm_archive"
+output_file_archive_path = "input_words_archive_hmm_chinese_pod"
 
 # anki_deck_name = "DuChinese Hanzi Spaces with Actors (Русский)"
 # output_deck = "duchinese_hanzi_spaces_actors_rus.apkg"
-anki_deck_name = "Roman class Hanzi Spaces with Actors (Русский)"
-output_deck = "roman_class_hanzi_spaces_actors_rus.apkg"
+# anki_deck_name = "Roman class Hanzi Spaces with Actors (Русский)"
+anki_deck_name = "Chinese Pod Hanzi Spaces with Actors (Русский)"
+output_deck = "chinese_pod_hanzi_spaces_actors_rus.apkg"
 
 
 # --- Constants for OpenAI ---
