@@ -109,6 +109,7 @@ class HanziComponentsDB:
         
         data = self.db[hanzi]
         decomposition = data.get('decomposition', '')
+        definition = data.get('definition', '')
         structure, components = self._parse_decomposition(decomposition)
         
         new_components = []
@@ -119,15 +120,13 @@ class HanziComponentsDB:
                 meanings_list = self.parse_separated_values(meaning_data)
                 meaning = meanings_list[0] if meanings_list else "без значения"
                 
-                # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
                 new_components.append(f'{component} ({meaning})')
         
         components_with_meaning = ", ".join(new_components)
         
         return {
             'character': hanzi, 
-            # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
-            'structure': self.component_meanings.get(structure[0], 'неизвестная структура') if structure else '',
+            'structure': self.component_meanings.get(structure[0], definition) if structure else '',
             'components_with_meaning': components_with_meaning,
         }
 

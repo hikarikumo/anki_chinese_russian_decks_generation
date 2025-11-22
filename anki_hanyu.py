@@ -107,6 +107,7 @@ class HanziComponentsDB:
         
         data = self.db[hanzi]
         decomposition = data.get('decomposition', '')
+        definition = data.get('definition', '')
         structure, components = self._parse_decomposition(decomposition)
         
         new_components = []
@@ -117,15 +118,13 @@ class HanziComponentsDB:
                 meanings_list = self.parse_separated_values(meaning_data)
                 meaning = meanings_list[0] if meanings_list else "без значения"
                 
-                # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
                 new_components.append(f'{component} ({meaning})')
         
         components_with_meaning = ", ".join(new_components)
         
         return {
             'character': hanzi, 
-            # 💡 ИЗМЕНЕНИЕ: Удален жирный шрифт (<b>)
-            'structure': self.component_meanings.get(structure[0], 'неизвестная структура') if structure else '',
+            'structure': self.component_meanings.get(structure[0], definition) if structure else '',
             'components_with_meaning': components_with_meaning,
         }
 
@@ -491,7 +490,7 @@ class ChineseAnkiGenerator:
             if is_chinese_char(char):
                 data = self.components_db.get_hanzi_components(char)
                 if data:
-                    structure = f"Структура: {data['structure']}"
+                    structure = f"Значение: {data['structure']}"
                     components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}" 
                     hints.append(f"• {char}: {structure}, {components}")
         
