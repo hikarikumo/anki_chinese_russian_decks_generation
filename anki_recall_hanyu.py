@@ -13,19 +13,19 @@ import random
 import openai
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
-# from openai import OpenAI # Не используется, можно удалить, но по условию не удаляем
-# from openai import OpenAIError # Не используется
-# import base64 # Не используется
-# import http.client # Не используется
-# import re # Не используется
+# from openai import OpenAI 
+# from openai import OpenAIError 
+# import base64 
+# import http.client 
+# import re 
 
-# --- Настройки колоды (ВОССТАНОВЛЕНЫ ВСЕ ВАРИАНТЫ) ---
+
 # anki_deck_name = "Vova chinese HSK1"
 # anki_deck_name = "DuChinese chinese HSK1"
 # anki_deck_name = "DuChinese pet store" 
 # anki_deck_name = "DuChinese Butterfly lovers"
-anki_deck_name = "recall_DuChinese hsk1 dialogues"
-# anki_deck_name = "MandarinBean hsk2"
+# anki_deck_name = "recall_DuChinese hsk1 dialogues"
+anki_deck_name = "recall_MandarinBean hsk2"
 # anki_deck_name = "HSK3 trade bargain"
 # anki_deck_name = "HSK3 Standard course"
 # anki_deck_name = "Parks"
@@ -40,8 +40,8 @@ anki_deck_name = "recall_DuChinese hsk1 dialogues"
 # output_deck = "Duchinese_hsk1.apkg"
 # output_deck = "Duchinese_pet_store.apkg"
 # output_deck = "Duchinese_butterfly_lovers.apkg"
-output_deck = "recall_DuChinese_hsk1_dialogues.apkg"
-# output_deck = "MandarinBean_hsk2.apkg"
+# output_deck = "recall_DuChinese_hsk1_dialogues.apkg"
+output_deck = "recall_MandarinBean_hsk2.apkg"
 # output_deck = "HSK3_Standard_course.apkg"
 # output_deck = "HSK3_trade_bargain.apkg"
 # output_deck = "2025.08.21.apkg"
@@ -58,13 +58,13 @@ input_file = "chinese_words.txt"
 # input_words_archive = "input_words_archive_meiling"
 # input_words_archive = "input_words_archive_duchinese_pet_store"
 # input_words_archive = "input_words_archive_duchinese_butterfly_lovers"
-input_words_archive = "input_recall_words_archive_duchinese_hsk1_dialogues"
-# input_words_archive = "input_words_archive_mandarinbean_hsk2"
+# input_words_archive = "input_recall_words_archive_duchinese_hsk1_dialogues"
+input_words_archive = "input_words_archive_recall_mandarinbean_hsk2"
 
-# Path to makemeahanzi graphics.txt (update this to your local path)
+
 GRAPHICS_PATH = "graphics.txt"
 
-# --- Constants for OpenAI / DALL-E (ВОССТАНОВЛЕНО из первого скрипта) ---
+
 # OPENAI_MODEL = "gpt-4o-mini"
 # OPENAI_MODEL = "o3-mini-2025-01-31"
 # OPENAI_MAX_TOKENS = 300
@@ -73,7 +73,7 @@ GRAPHICS_PATH = "graphics.txt"
 # OPENAI_IMAGE_MODEL = "dall-e-2"
 # IMAGE_SIZE = "1024x1024"
 
-# --- Вставляем класс HanziComponentsDB из первого скрипта ---
+
 class HanziComponentsDB:
     def __init__(self, db_file='hanzi_db.txt'):
         self.db = self._load_db(db_file)
@@ -141,12 +141,9 @@ class HanziComponentsDB:
 
 class ChineseAnkiGenerator:
     def __init__(self):
-        # Load stroke data from makemeahanzi
         self.graphics_data = self.load_graphics_data(GRAPHICS_PATH)
-        # 💡 ИЗМЕНЕНИЕ: Добавление инициализации базы компонентов
         self.components_db = HanziComponentsDB(db_file='hanzi_db.txt') 
 
-        # Create Anki model with StrokeOrder field
         self.model = genanki.Model(
             random.randrange(1 << 30, 1 << 31),
             anki_deck_name,
@@ -158,10 +155,9 @@ class ChineseAnkiGenerator:
                 {"name": "Example"},
                 {"name": "ExamplePinyin"},
                 {"name": "ExampleMeaning"},
-                # 💡 ИЗМЕНЕНИЕ: Добавить поле Hint
                 {"name": "Hint"}, 
                 {"name": "Audio"},
-                {"name": "StrokeOrder"},  # New field for stroke order image
+                {"name": "StrokeOrder"}, 
             ],
             templates=[
                 {
@@ -308,11 +304,11 @@ class ChineseAnkiGenerator:
                 # Try with "-still" suffix
                 svg_path = f"svgs-still/{code_point}-still.svg"
                 if not os.path.exists(svg_path):
-                    # print(f"Warning: No SVG file found for '{char}' (code point {code_point})") # Убрано, как в первом скрипте
+                    # print(f"Warning: No SVG file found for '{char}' (code point {code_point})")
                     continue
             
             svg_paths.append(svg_path)
-            # print(f"Found existing SVG for '{char}' at {svg_path}") # ВОССТАНОВЛЕНО
+            # print(f"Found existing SVG for '{char}' at {svg_path}")
         
         if not svg_paths:
             return None
@@ -493,7 +489,6 @@ class ChineseAnkiGenerator:
             print(f"Error fetching audio: {e}")
             return None
 
-    # --- Вставляем метод get_hanzi_hint из первого скрипта ---
     def get_hanzi_hint(self, word):
         """
         Разбирает каждый иероглиф в слове на компоненты с их значениями.
@@ -509,7 +504,6 @@ class ChineseAnkiGenerator:
                     hints.append(f"• {char}: {structure}, {components}")
         
         if hints:
-            # 💡 ИЗМЕНЕНИЕ: Объединяем элементы списка через <br> для переноса строки
             return "<br>".join(hints)
         else:
             return ""
@@ -540,7 +534,6 @@ class ChineseAnkiGenerator:
             example_colored_pinyin = ""
             example_meaning = ""
 
-        # 💡 ИЗМЕНЕНИЕ: Получение подсказки по компонентам (для нового поля)
         component_hint = self.get_hanzi_hint(word)
 
         # Get audio
@@ -630,7 +623,6 @@ class ChineseAnkiGenerator:
 
         return results
 
-# 💡 UNCHANGED: This function remains as requested.
 async def google_translate(word):
     translator = Translator()
     translation = await translator.translate(word, src="zh-cn", dest="ru")
@@ -669,7 +661,6 @@ def check_input_duplicates(input_file):
             f.write(f"{word}\n")
     return new_input_words
 
-# --- Вставляем функцию is_chinese_char из первого скрипта ---
 def is_chinese_char(text):
     for char in text:
         code_point = ord(char)
