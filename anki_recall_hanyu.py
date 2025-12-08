@@ -20,12 +20,15 @@ from google.api_core import exceptions as google_exceptions
 # import re 
 
 
+input_file = "chinese_words.txt"
+
 # anki_deck_name = "Vova chinese HSK1"
 # anki_deck_name = "DuChinese chinese HSK1"
 # anki_deck_name = "DuChinese pet store" 
 # anki_deck_name = "DuChinese Butterfly lovers"
 # anki_deck_name = "recall_DuChinese hsk1 dialogues"
-anki_deck_name = "recall_MandarinBean hsk2"
+# anki_deck_name = "recall_MandarinBean hsk2"
+
 # anki_deck_name = "HSK3 trade bargain"
 # anki_deck_name = "HSK3 Standard course"
 # anki_deck_name = "Parks"
@@ -41,7 +44,7 @@ anki_deck_name = "recall_MandarinBean hsk2"
 # output_deck = "Duchinese_pet_store.apkg"
 # output_deck = "Duchinese_butterfly_lovers.apkg"
 # output_deck = "recall_DuChinese_hsk1_dialogues.apkg"
-output_deck = "recall_MandarinBean_hsk2.apkg"
+# output_deck = "recall_MandarinBean_hsk2.apkg"
 # output_deck = "HSK3_Standard_course.apkg"
 # output_deck = "HSK3_trade_bargain.apkg"
 # output_deck = "2025.08.21.apkg"
@@ -50,7 +53,7 @@ output_deck = "recall_MandarinBean_hsk2.apkg"
 # output_deck = "chinese_pod_newbie.apkg"
 # output_deck = "meiling_conversation.apkg"
 # output_deck = "parks.apkg"
-input_file = "chinese_words.txt"    
+ 
 # input_words_archive = "input_words_archive_2025.08.21"
 # input_words_archive = "input_words_archive_chinese_daily_podcast"
 # input_words_archive = "input_words_archive_chinese_roman"
@@ -59,7 +62,11 @@ input_file = "chinese_words.txt"
 # input_words_archive = "input_words_archive_duchinese_pet_store"
 # input_words_archive = "input_words_archive_duchinese_butterfly_lovers"
 # input_words_archive = "input_recall_words_archive_duchinese_hsk1_dialogues"
-input_words_archive = "input_words_archive_recall_mandarinbean_hsk2"
+# input_words_archive = "input_words_archive_recall_mandarinbean_hsk2"
+
+anki_deck_name = "recall_MandarinBean hsk1"
+output_deck = "recall_MandarinBean_hsk1.apkg"
+input_words_archive = "input_words_archive_recall_mandarinbean_hsk1"
 
 
 GRAPHICS_PATH = "graphics.txt"
@@ -459,6 +466,47 @@ class ChineseAnkiGenerator:
             print(f"An unexpected error occurred: {e}")
             return None
 
+    def get_mnemonic_from_gemini(self, hanzi):
+        """
+        Генерирует короткую мнемонику для запоминания иероглифа с использованием Gemini (Синхронно).
+        """
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            return "Ошибка: GOOGLE_API_KEY не установлен."
+        genai.configure(api_key=api_key)
+
+        try:
+            model = genai.GenerativeModel('gemini-2.5-pro') 
+            
+            prompt = (
+                f"Напиши очень короткую, запоминающуюся и креативную мнемонику на русском языке "
+                f"для запоминания китайского иероглифа '{hanzi}'. "
+                f"Мнемоника должна быть только одним предложением и помогать запомнить значение, "
+                f"основываясь на его структуре или значении. "
+                "Верни мнемонику как чистый текст, без кавычек, префиксов или объяснений. "
+                "Например, для '好' (hǎo, хороший): 'Женщина (女) и ребенок (子) — это хорошо (好).'"
+            )            
+
+            # 💡 Синхронный вызов
+            response = model.generate_content(
+                prompt,
+                generation_config={"temperature": 0.9}
+            )
+
+            if response.text:
+                # Очистка от потенциальных кавычек или лишних символов
+                mnemonic = response.text.strip().replace('"', '').replace("'", "")
+                return mnemonic
+            else:
+                return "Не удалось сгенерировать мнемонику."
+
+        except google_exceptions.GoogleAPIError as e:
+            print(f"Error generating mnemonic with Gemini API for '{hanzi}': {e}")
+            return f"Ошибка API Gemini: {e}"
+        except Exception as e:
+            print(f"An unexpected error occurred while generating mnemonic for '{hanzi}': {e}")
+            return "Непредвиденная ошибка при генерации мнемоники."
+
     def get_audio_from_forvo(self, word):
         """Get audio pronunciation from Forvo API"""
         # (Your existing implementation remains unchanged)
@@ -489,7 +537,7 @@ class ChineseAnkiGenerator:
             print(f"Error fetching audio: {e}")
             return None
 
-    def get_hanzi_hint(self, word):
+    # def get_hanzi_hint(self, word):
         """
         Разбирает каждый иероглиф в слове на компоненты с их значениями.
         Форматирует вывод для поля "Подсказка", без жирного шрифта, с переносом строки.
@@ -507,6 +555,120 @@ class ChineseAnkiGenerator:
             return "<br>".join(hints)
         else:
             return ""
+
+    def get_hanzi_hint(self, word):
+        """
+        Разбирает каждый иероглиф в слове на компоненты со значениями и добавляет мнемонику.
+        """
+        hints = []
+        for char in word:
+            if is_chinese_char(char):
+                data = self.components_db.get_hanzi_components(char)
+                # 💡 Синхронный вызов
+                mnemonic = self.get_mnemonic_from_gemini(char) 
+
+                hint_parts = []
+                if data and data['structure']:
+                    structure = f"Структура: {data['structure']}"
+                    hint_parts.append(structure)
+                if data and data['components_with_meaning']:
+                    # 💡 Убрана жирность из компонента, но сохранена в мнемонике
+                    components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}"
+                    hint_parts.append(components)
+
+                if mnemonic and mnemonic != "Непредвиденная ошибка при генерации мнемоники.":
+                    hint_parts.append(f"Мнемоника: **{mnemonic}**")
+
+                if hint_parts:
+                    hints.append(f"• {char}: {', '.join(hint_parts)}")
+        
+        if hints:
+            # Объединяем элементы списка через <br> для переноса строки
+            return "<br>".join(hints)
+        else:
+            return ""
+    
+
+    # def process_word(self, word):
+    #     """Process a single Chinese word"""
+    #     print(f"Processing: {word}")
+
+    #     # Get pinyin
+    #     raw_pinyin = pinyin(word, style=Style.TONE3)
+    #     pinyin_text = " ".join(["".join(p) for p in raw_pinyin])
+    #     colored_pinyin = self.color_pinyin(pinyin_text)
+
+    #     # Get dictionary definition
+    #     meaning = self.get_dictionary_data(word)
+
+    #     # Get example sentence
+    #     try:
+    #         example = self.get_example_from_gemini(word)
+    #         example_chinese = example["chinese"] if example else ""
+    #         example_meaning = example["meaning"] if example else ""
+    #         example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)
+    #         example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
+    #         example_colored_pinyin = self.color_pinyin(example_pinyin_text)
+    #     except Exception as e:
+    #         print(f"Error fetching example: {e}")
+    #         example_chinese = ""
+    #         example_colored_pinyin = ""
+    #         example_meaning = ""
+
+    #     component_hint = self.get_hanzi_hint(word)
+
+    #     # Get audio
+    #     audio_file = self.get_audio_from_forvo(word)
+    #     audio_tag = f"[sound:{os.path.basename(audio_file)}]" if audio_file and os.path.exists(audio_file) else ""
+    #     if audio_file:
+    #         self.media_files.append(audio_file)
+
+    #     # Generate stroke order image references
+    #     stroke_image_result = self.create_stroke_image(word, f"strokes/{word}_strokes.png")
+
+    #     if stroke_image_result:
+    #         if isinstance(stroke_image_result, tuple):
+    #             # We have multiple SVGs for a multi-character word
+    #             primary_svg_path, all_svg_paths = stroke_image_result
+                
+    #             # Create HTML to display all SVGs side by side
+    #             stroke_tag = ""
+    #             for svg_path in all_svg_paths:
+    #                 base_filename = os.path.basename(svg_path)
+    #                 stroke_tag += f'<img src="{base_filename}" style="height:100px; margin-right:10px;">'
+    #         else:
+    #             # Single SVG
+    #             base_filename = os.path.basename(stroke_image_result)
+    #             stroke_tag = f'<img src="{base_filename}">'
+    #     else:
+    #         stroke_tag = ""
+
+    #     # Create Anki note
+    #     note = genanki.Note(
+    #         model=self.model,
+    #         fields=[
+    #             word,              # Chinese
+    #             pinyin_text,       # Pinyin
+    #             colored_pinyin,    # ColoredPinyin
+    #             meaning,           # Meaning
+    #             example_chinese,   # Example
+    #             example_colored_pinyin,  # ExamplePinyin
+    #             example_meaning,   # ExampleMeaning
+    #             component_hint,    # Hint (Подсказка с компонентами)
+    #             audio_tag,         # Audio
+    #             stroke_tag,        # StrokeOrder
+    #         ],
+    #     )
+
+    #     self.deck.add_note(note)
+    #     time.sleep(1)
+
+    #     return {
+    #         "word": word,
+    #         "pinyin": pinyin_text,
+    #         "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
+    #     }
+
 
     def process_word(self, word):
         """Process a single Chinese word"""
@@ -529,13 +691,16 @@ class ChineseAnkiGenerator:
             example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
             example_colored_pinyin = self.color_pinyin(example_pinyin_text)
         except Exception as e:
-            print(f"Error fetching example: {e}")
             example_chinese = ""
             example_colored_pinyin = ""
             example_meaning = ""
 
-        component_hint = self.get_hanzi_hint(word)
-
+        # Получение подсказки по компонентам И МНЕМОНИКЕ (Синхронно)
+        component_hint = self.get_hanzi_hint(word) 
+        
+        # 💡 ИЗМЕНЕНИЕ: Поле ExampleMeaning теперь содержит только перевод примера, без префикса "Значение примера:"
+        final_example_meaning = f"{example_meaning}" if example_meaning else ""
+        
         # Get audio
         audio_file = self.get_audio_from_forvo(word)
         audio_tag = f"[sound:{os.path.basename(audio_file)}]" if audio_file and os.path.exists(audio_file) else ""
@@ -572,8 +737,8 @@ class ChineseAnkiGenerator:
                 meaning,           # Meaning
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
-                example_meaning,   # ExampleMeaning
-                component_hint,    # Hint (Подсказка с компонентами)
+                final_example_meaning,   # ExampleMeaning (Только перевод примера)
+                component_hint,    # Hint (Подсказка с компонентами и мнемоникой)
                 audio_tag,         # Audio
                 stroke_tag,        # StrokeOrder
             ],
@@ -587,6 +752,7 @@ class ChineseAnkiGenerator:
             "pinyin": pinyin_text,
             "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
         }
+
 
     def create_deck_from_file(self, input_words, output_file=output_deck):
         """Create Anki deck from Chinese words"""
