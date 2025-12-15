@@ -560,7 +560,7 @@ class ChineseAnkiGenerator:
 
                 hint_parts = []
                 if data and data['structure']:
-                    structure = f"Структура: {data['structure']}"
+                    structure = f"Значение: {data['structure']}"
                     hint_parts.append(structure)
                 if data and data['components_with_meaning']:
                     # 💡 Убрана жирность из компонента, но сохранена в мнемонике

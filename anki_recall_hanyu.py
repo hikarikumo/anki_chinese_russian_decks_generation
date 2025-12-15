@@ -537,24 +537,6 @@ class ChineseAnkiGenerator:
             print(f"Error fetching audio: {e}")
             return None
 
-    # def get_hanzi_hint(self, word):
-        """
-        Разбирает каждый иероглиф в слове на компоненты с их значениями.
-        Форматирует вывод для поля "Подсказка", без жирного шрифта, с переносом строки.
-        """
-        hints = []
-        for char in word:
-            if is_chinese_char(char):
-                data = self.components_db.get_hanzi_components(char)
-                if data:
-                    structure = f"Структура: {data['structure']}"
-                    components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}" 
-                    hints.append(f"• {char}: {structure}, {components}")
-        
-        if hints:
-            return "<br>".join(hints)
-        else:
-            return ""
 
     def get_hanzi_hint(self, word):
         """
@@ -569,7 +551,7 @@ class ChineseAnkiGenerator:
 
                 hint_parts = []
                 if data and data['structure']:
-                    structure = f"Структура: {data['structure']}"
+                    structure = f"Значение: {data['structure']}"
                     hint_parts.append(structure)
                 if data and data['components_with_meaning']:
                     # 💡 Убрана жирность из компонента, но сохранена в мнемонике
@@ -588,88 +570,6 @@ class ChineseAnkiGenerator:
         else:
             return ""
     
-
-    # def process_word(self, word):
-    #     """Process a single Chinese word"""
-    #     print(f"Processing: {word}")
-
-    #     # Get pinyin
-    #     raw_pinyin = pinyin(word, style=Style.TONE3)
-    #     pinyin_text = " ".join(["".join(p) for p in raw_pinyin])
-    #     colored_pinyin = self.color_pinyin(pinyin_text)
-
-    #     # Get dictionary definition
-    #     meaning = self.get_dictionary_data(word)
-
-    #     # Get example sentence
-    #     try:
-    #         example = self.get_example_from_gemini(word)
-    #         example_chinese = example["chinese"] if example else ""
-    #         example_meaning = example["meaning"] if example else ""
-    #         example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)
-    #         example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
-    #         example_colored_pinyin = self.color_pinyin(example_pinyin_text)
-    #     except Exception as e:
-    #         print(f"Error fetching example: {e}")
-    #         example_chinese = ""
-    #         example_colored_pinyin = ""
-    #         example_meaning = ""
-
-    #     component_hint = self.get_hanzi_hint(word)
-
-    #     # Get audio
-    #     audio_file = self.get_audio_from_forvo(word)
-    #     audio_tag = f"[sound:{os.path.basename(audio_file)}]" if audio_file and os.path.exists(audio_file) else ""
-    #     if audio_file:
-    #         self.media_files.append(audio_file)
-
-    #     # Generate stroke order image references
-    #     stroke_image_result = self.create_stroke_image(word, f"strokes/{word}_strokes.png")
-
-    #     if stroke_image_result:
-    #         if isinstance(stroke_image_result, tuple):
-    #             # We have multiple SVGs for a multi-character word
-    #             primary_svg_path, all_svg_paths = stroke_image_result
-                
-    #             # Create HTML to display all SVGs side by side
-    #             stroke_tag = ""
-    #             for svg_path in all_svg_paths:
-    #                 base_filename = os.path.basename(svg_path)
-    #                 stroke_tag += f'<img src="{base_filename}" style="height:100px; margin-right:10px;">'
-    #         else:
-    #             # Single SVG
-    #             base_filename = os.path.basename(stroke_image_result)
-    #             stroke_tag = f'<img src="{base_filename}">'
-    #     else:
-    #         stroke_tag = ""
-
-    #     # Create Anki note
-    #     note = genanki.Note(
-    #         model=self.model,
-    #         fields=[
-    #             word,              # Chinese
-    #             pinyin_text,       # Pinyin
-    #             colored_pinyin,    # ColoredPinyin
-    #             meaning,           # Meaning
-    #             example_chinese,   # Example
-    #             example_colored_pinyin,  # ExamplePinyin
-    #             example_meaning,   # ExampleMeaning
-    #             component_hint,    # Hint (Подсказка с компонентами)
-    #             audio_tag,         # Audio
-    #             stroke_tag,        # StrokeOrder
-    #         ],
-    #     )
-
-    #     self.deck.add_note(note)
-    #     time.sleep(1)
-
-    #     return {
-    #         "word": word,
-    #         "pinyin": pinyin_text,
-    #         "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
-    #     }
-
-
     def process_word(self, word):
         """Process a single Chinese word"""
         print(f"Processing: {word}")
