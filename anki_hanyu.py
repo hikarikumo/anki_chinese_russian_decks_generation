@@ -18,6 +18,7 @@ from openai import OpenAIError
 import base64
 import http.client
 import re
+from gtts import gTTS
 
 
 input_file = "chinese_words.txt"
@@ -160,6 +161,7 @@ class ChineseAnkiGenerator:
                 {"name": "ExampleMeaning"},
                 {"name": "Hint"}, 
                 {"name": "Audio"},
+                {"name": "ExampleAudio"},
                 {"name": "StrokeOrder"},
             ],
             templates=[
@@ -167,15 +169,15 @@ class ChineseAnkiGenerator:
                     "name": "Recognition (Chinese -> Russian)",
                     "qfmt": '<div class="chinese">{{Chinese}}</div><div class="stroke-order">{{StrokeOrder}}</div>',
                     "afmt": """
-                        <div class="stroke-order">{{StrokeOrder}}</div>
+                        {{Audio}} <div class="stroke-order">{{StrokeOrder}}</div>
                         <hr>
                         <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="meaning">{{Meaning}}</div>
                         <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
+                        <div class="example-audio">{{ExampleAudio}}</div>
                         <div class="hint-section">{{Hint}}</div> 
-                        {{Audio}}
                     """,
                 },
                 {
@@ -184,16 +186,16 @@ class ChineseAnkiGenerator:
                             <div class="meaning">{{Meaning}}</div>
                             """,
                     "afmt": """
-                        <div class="meaning">{{Meaning}}</div>
+                        {{Audio}} <div class="meaning">{{Meaning}}</div>
                         <hr>
                         <div class="chinese">{{Chinese}}</div>
                         <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
+                        <div class="example-audio">{{ExampleAudio}}</div>
                         <div class="stroke-order">{{StrokeOrder}}</div>
                         <div class="hint-section">{{Hint}}</div> 
-                        {{Audio}}
                     """,
                 },
             ],
@@ -240,8 +242,11 @@ class ChineseAnkiGenerator:
                 .example-meaning { 
                     font-size: 16px; 
                     font-style: italic; 
-                    margin-bottom: 15px;
+                    margin-bottom: 5px;
                     color: #555;
+                }
+                .example-audio {
+                    margin-bottom: 15px;
                 }
                 .hint-section {
                     margin-top: 20px;
@@ -497,54 +502,30 @@ class ChineseAnkiGenerator:
             return "Непредвиденная ошибка при генерации мнемоники."
 
 
-    def get_audio_from_forvo(self, word):
-        """Get audio pronunciation from Forvo API"""
-        audio_dir = "forvo_audio"
+    def get_audio_from_tts(self, word):
+        """Generate audio pronunciation using Google TTS (Replacing Forvo)"""
+        audio_dir = "chinese_audio_files"
         if not os.path.exists(audio_dir):
             os.makedirs(audio_dir)
-        audio_file_path = f"{audio_dir}/{word}_audio.mp3"
-        if os.path.exists(audio_file_path):
-            return audio_file_path
-        try:
-            encoded_word = urllib.parse.quote(word)
-            forvo_api_key = os.getenv("FORVO_API_KEY")
-            api_url = f"https://apifree.forvo.com/key/{forvo_api_key}/format/json/action/word-pronunciations/word/{encoded_word}/language/zh"
-            response = requests.get(api_url)
-            if response.status_code == 200:
-                data = response.json()
-                if "items" in data and len(data["items"]) > 0:
-                    sorted_items = sorted(data["items"], key=lambda x: int(x.get("num_positive_votes", 0)), reverse=True)
-                    audio_url = sorted_items[0]["pathmp3"]
-                    audio_response = requests.get(audio_url)
-                    if audio_response.status_code == 200:
-                        with open(audio_file_path, "wb") as f:
-                            f.write(audio_response.content)
-                        print(f"Downloaded audio for {word}")
-                        return audio_file_path
-            return None
-        except Exception as e:
-            print(f"Error fetching audio: {e}")
-            return None
-
-    # def get_hanzi_hint(self, word):
-    #     """
-    #     Разбирает каждый иероглиф в слове на компоненты с их значениями.
-    #     Форматирует вывод для поля "Подсказка", без жирного шрифта, с переносом строки.
-    #     """
-    #     hints = []
-    #     for char in word:
-    #         if is_chinese_char(char):
-    #             data = self.components_db.get_hanzi_components(char)
-    #             if data:
-    #                 structure = f"Значение: {data['structure']}"
-    #                 components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}" 
-    #                 hints.append(f"• {char}: {structure}, {components}")
+            
+        # Добавляем timestamp, чтобы имена файлов не конфликтовали
+        safe_word = "".join([c for c in word if c.isalnum()])
+        if len(safe_word) > 50: # Ограничиваем длину имени файла
+             safe_word = safe_word[:50]
+             
+        timestamp = int(time.time())
+        filename = f"{safe_word}_{timestamp}.mp3"
+        audio_file_path = os.path.join(audio_dir, filename)
         
-    #     if hints:
-    #         # 💡 ИЗМЕНЕНИЕ: Объединяем элементы списка через <br> для переноса строки
-    #         return "<br>".join(hints)
-    #     else:
-    #         return ""
+        try:
+            # zh-cn для упрощенного китайского
+            tts = gTTS(text=word, lang='zh-cn')
+            tts.save(audio_file_path)
+            print(f"Generated TTS audio for {word}")
+            return audio_file_path
+        except Exception as e:
+            print(f"Error generating TTS audio: {e}")
+            return None
 
 
     def get_hanzi_hint(self, word):
@@ -580,90 +561,6 @@ class ChineseAnkiGenerator:
             return ""
 
 
-    # def process_word(self, word):
-    #     """Process a single Chinese word"""
-    #     print(f"Processing: {word}")
-
-    #     # Get pinyin
-    #     raw_pinyin = pinyin(word, style=Style.TONE3)
-    #     pinyin_text = " ".join(["".join(p) for p in raw_pinyin])
-    #     colored_pinyin = self.color_pinyin(pinyin_text)
-
-    #     # Get dictionary definition
-    #     meaning = self.get_dictionary_data(word)
-
-    #     # Get example sentence
-    #     try:
-    #         example = self.get_example_from_gemini(word)
-    #         example_chinese = example["chinese"] if example else ""
-    #         example_meaning = example["meaning"] if example else ""
-    #         example_raw_pinyin = pinyin(example_chinese, style=Style.TONE3)
-    #         example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
-    #         example_colored_pinyin = self.color_pinyin(example_pinyin_text)
-    #     except Exception as e:
-    #         # print(f"Error fetching example: {e}") # ВОССТАНОВЛЕНО
-    #         example_chinese = ""
-    #         example_colored_pinyin = ""
-    #         example_meaning = ""
-
-    #     # Получение подсказки по компонентам (для нового поля)
-    #     component_hint = self.get_hanzi_hint(word)
-        
-    #     # 💡 ИЗМЕНЕНИЕ: Поле ExampleMeaning теперь содержит только перевод примера, без префикса "Значение примера:"
-    #     final_example_meaning = f"{example_meaning}" if example_meaning else ""
-        
-    #     # Get audio
-    #     audio_file = self.get_audio_from_forvo(word)
-    #     audio_tag = f"[sound:{os.path.basename(audio_file)}]" if audio_file and os.path.exists(audio_file) else ""
-    #     if audio_file:
-    #         self.media_files.append(audio_file)
-
-    #     # Generate stroke order image references
-    #     stroke_image_result = self.create_stroke_image(word, f"strokes/{word}_strokes.png")
-
-    #     if stroke_image_result:
-    #         if isinstance(stroke_image_result, tuple):
-    #             # We have multiple SVGs for a multi-character word
-    #             primary_svg_path, all_svg_paths = stroke_image_result
-                
-    #             # Create HTML to display all SVGs side by side
-    #             stroke_tag = ""
-    #             for svg_path in all_svg_paths:
-    #                 base_filename = os.path.basename(svg_path)
-    #                 stroke_tag += f'<img src="{base_filename}" style="height:100px; margin-right:10px;">'
-    #         else:
-    #             # Single SVG
-    #             base_filename = os.path.basename(stroke_image_result)
-    #             stroke_tag = f'<img src="{base_filename}">'
-    #     else:
-    #         stroke_tag = ""
-
-    #     # Create Anki note
-    #     note = genanki.Note(
-    #         model=self.model,
-    #         fields=[
-    #             word,              # Chinese
-    #             pinyin_text,       # Pinyin
-    #             colored_pinyin,    # ColoredPinyin
-    #             meaning,           # Meaning
-    #             example_chinese,   # Example
-    #             example_colored_pinyin,  # ExamplePinyin
-    #             final_example_meaning,   # ExampleMeaning (Только перевод примера)
-    #             component_hint,    # Hint (Подсказка с компонентами)
-    #             audio_tag,         # Audio
-    #             stroke_tag,        # StrokeOrder
-    #         ],
-    #     )
-
-    #     self.deck.add_note(note)
-    #     time.sleep(1)
-
-    #     return {
-    #         "word": word,
-    #         "pinyin": pinyin_text,
-    #         "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
-    #     }
-
     def process_word(self, word):
         """Process a single Chinese word"""
         print(f"Processing: {word}")
@@ -685,21 +582,32 @@ class ChineseAnkiGenerator:
             example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
             example_colored_pinyin = self.color_pinyin(example_pinyin_text)
         except Exception as e:
+            # print(f"Error fetching example: {e}") # ВОССТАНОВЛЕНО
             example_chinese = ""
             example_colored_pinyin = ""
             example_meaning = ""
 
-        # Получение подсказки по компонентам И МНЕМОНИКЕ (Синхронно)
-        component_hint = self.get_hanzi_hint(word) 
+        # Получение подсказки по компонентам (для нового поля)
+        component_hint = self.get_hanzi_hint(word)
         
         # 💡 ИЗМЕНЕНИЕ: Поле ExampleMeaning теперь содержит только перевод примера, без префикса "Значение примера:"
         final_example_meaning = f"{example_meaning}" if example_meaning else ""
         
-        # Get audio
-        audio_file = self.get_audio_from_forvo(word)
+        # Get audio (UPDATED: USING TTS INSTEAD OF FORVO)
+        audio_file = self.get_audio_from_tts(word)
         audio_tag = f"[sound:{os.path.basename(audio_file)}]" if audio_file and os.path.exists(audio_file) else ""
         if audio_file:
             self.media_files.append(audio_file)
+
+        # --- НОВАЯ ЛОГИКА: Озвучка примера предложения ---
+        example_audio_tag = ""
+        if example_chinese:
+             # Генерируем аудио для всего предложения примера
+             example_audio_file = self.get_audio_from_tts(example_chinese)
+             if example_audio_file and os.path.exists(example_audio_file):
+                  self.media_files.append(example_audio_file)
+                  example_audio_tag = f"[sound:{os.path.basename(example_audio_file)}]"
+        # -------------------------------------------------
 
         # Generate stroke order image references
         stroke_image_result = self.create_stroke_image(word, f"strokes/{word}_strokes.png")
@@ -732,8 +640,9 @@ class ChineseAnkiGenerator:
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
                 final_example_meaning,   # ExampleMeaning (Только перевод примера)
-                component_hint,    # Hint (Подсказка с компонентами и мнемоникой)
+                component_hint,    # Hint (Подсказка с компонентами)
                 audio_tag,         # Audio
+                example_audio_tag, # ExampleAudio (Аудио примера)
                 stroke_tag,        # StrokeOrder
             ],
         )
@@ -746,7 +655,6 @@ class ChineseAnkiGenerator:
             "pinyin": pinyin_text,
             "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
         }
-
 
     def create_deck_from_file(self, input_words, output_file=output_deck):
         """Create Anki deck from Chinese words"""
