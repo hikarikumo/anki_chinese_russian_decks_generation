@@ -156,6 +156,7 @@ class ChineseAnkiGenerator:
                 {"name": "Pinyin"},
                 {"name": "ColoredPinyin"},
                 {"name": "Meaning"},
+                {"name": "WordMnemonic"}, # <--- НОВОЕ ПОЛЕ: Мнемоника для слова
                 {"name": "Example"},
                 {"name": "ExamplePinyin"},
                 {"name": "ExampleMeaning"},
@@ -173,7 +174,7 @@ class ChineseAnkiGenerator:
                         <hr>
                         <div class="pinyin">{{ColoredPinyin}}</div>
                         <div class="meaning">{{Meaning}}</div>
-                        <div class="example">{{Example}}</div>
+                        <div class="word-mnemonic">{{WordMnemonic}}</div> <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
                         <div class="example-audio">{{ExampleAudio}}</div>
@@ -190,7 +191,7 @@ class ChineseAnkiGenerator:
                         <hr>
                         <div class="chinese">{{Chinese}}</div>
                         <div class="pinyin">{{ColoredPinyin}}</div>
-                        <div class="example">{{Example}}</div>
+                        <div class="word-mnemonic">{{WordMnemonic}}</div> <div class="example">{{Example}}</div>
                         <div class="example-pinyin">{{ExamplePinyin}}</div>
                         <div class="example-meaning">{{ExampleMeaning}}</div>
                         <div class="example-audio">{{ExampleAudio}}</div>
@@ -230,6 +231,17 @@ class ChineseAnkiGenerator:
                 .meaning {
                     font-size: 20px;
                     margin-bottom: 15px;
+                }
+                /* СТИЛЬ ДЛЯ МНЕМОНИКИ СЛОВА */
+                .word-mnemonic {
+                    font-size: 16px;
+                    color: #2c3e50;
+                    background-color: #e8f4f8;
+                    padding: 8px;
+                    border-radius: 5px;
+                    margin: 10px 0;
+                    font-style: italic;
+                    border-left: 4px solid #3498db;
                 }
                 .example {
                     font-size: 18px;
@@ -501,6 +513,46 @@ class ChineseAnkiGenerator:
             print(f"An unexpected error occurred while generating mnemonic for '{hanzi}': {e}")
             return "Непредвиденная ошибка при генерации мнемоники."
 
+    def get_word_mnemonic_from_gemini(self, word, meaning):
+        """
+        Генерирует мнемонику для ЦЕЛОГО слова, если оно состоит из 2+ иероглифов.
+        Обыгрывает значение каждого иероглифа для объяснения смысла всего слова.
+        """
+        # Если слово состоит из 1 иероглифа или меньше, мнемоника для слова не нужна 
+        # (она будет в Hint как разбор иероглифа)
+        if len(word) < 2:
+            return ""
+
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            return ""
+        genai.configure(api_key=api_key)
+
+        try:
+            model = genai.GenerativeModel('gemini-2.5-pro') 
+            
+            prompt = (
+                f"Придумай короткую, логичную мнемонику на русском языке для китайского слова '{word}', "
+                f"которое означает '{meaning}'. "
+                f"Слово состоит из нескольких иероглифов. Разбей слово на иероглифы, укажи значение каждого "
+                f"и объедини их в одну фразу-историю, объясняющую смысл целого слова. "
+                f"Формат ответа: только текст мнемоники, без кавычек. "
+                f"Пример для '电脑' (компьютер): 'Электрический (电) мозг (脑) — это компьютер'."
+            )            
+
+            response = model.generate_content(
+                prompt,
+                generation_config={"temperature": 0.8}
+            )
+
+            if response.text:
+                return response.text.strip().replace('"', '').replace("'", "")
+            else:
+                return ""
+
+        except Exception as e:
+            print(f"Error generating word mnemonic for '{word}': {e}")
+            return ""
 
     def get_audio_from_tts(self, word):
         """Generate audio pronunciation using Google TTS (Replacing Forvo)"""
@@ -536,7 +588,6 @@ class ChineseAnkiGenerator:
         for char in word:
             if is_chinese_char(char):
                 data = self.components_db.get_hanzi_components(char)
-                # 💡 Синхронный вызов
                 mnemonic = self.get_mnemonic_from_gemini(char) 
 
                 hint_parts = []
@@ -544,7 +595,6 @@ class ChineseAnkiGenerator:
                     structure = f"Значение: {data['structure']}"
                     hint_parts.append(structure)
                 if data and data['components_with_meaning']:
-                    # 💡 Убрана жирность из компонента, но сохранена в мнемонике
                     components = f"Компоненты: {data['components_with_meaning'].replace('<b>', '').replace('</b>', '')}"
                     hint_parts.append(components)
 
@@ -573,6 +623,10 @@ class ChineseAnkiGenerator:
         # Get dictionary definition
         meaning = self.get_dictionary_data(word)
 
+        # --- НОВОЕ: Генерируем мнемонику для составного слова ---
+        word_mnemonic = self.get_word_mnemonic_from_gemini(word, meaning)
+        # -------------------------------------------------------
+
         # Get example sentence
         try:
             example = self.get_example_from_gemini(word)
@@ -582,15 +636,13 @@ class ChineseAnkiGenerator:
             example_pinyin_text = " ".join(["".join(p) for p in example_raw_pinyin])
             example_colored_pinyin = self.color_pinyin(example_pinyin_text)
         except Exception as e:
-            # print(f"Error fetching example: {e}") # ВОССТАНОВЛЕНО
+            print(f"Error fetching example: {e}")
             example_chinese = ""
             example_colored_pinyin = ""
             example_meaning = ""
 
-        # Получение подсказки по компонентам (для нового поля)
         component_hint = self.get_hanzi_hint(word)
         
-        # 💡 ИЗМЕНЕНИЕ: Поле ExampleMeaning теперь содержит только перевод примера, без префикса "Значение примера:"
         final_example_meaning = f"{example_meaning}" if example_meaning else ""
         
         # Get audio (UPDATED: USING TTS INSTEAD OF FORVO)
@@ -599,7 +651,7 @@ class ChineseAnkiGenerator:
         if audio_file:
             self.media_files.append(audio_file)
 
-        # --- НОВАЯ ЛОГИКА: Озвучка примера предложения ---
+        # --- Озвучка примера предложения ---
         example_audio_tag = ""
         if example_chinese:
              # Генерируем аудио для всего предложения примера
@@ -637,6 +689,7 @@ class ChineseAnkiGenerator:
                 pinyin_text,       # Pinyin
                 colored_pinyin,    # ColoredPinyin
                 meaning,           # Meaning
+                word_mnemonic,     # <--- НОВОЕ ПОЛЕ: WordMnemonic
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
                 final_example_meaning,   # ExampleMeaning (Только перевод примера)
