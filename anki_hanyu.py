@@ -689,7 +689,7 @@ class ChineseAnkiGenerator:
                 pinyin_text,       # Pinyin
                 colored_pinyin,    # ColoredPinyin
                 meaning,           # Meaning
-                word_mnemonic,     # <--- НОВОЕ ПОЛЕ: WordMnemonic
+                word_mnemonic,     # WordMnemonic
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
                 final_example_meaning,   # ExampleMeaning (Только перевод примера)

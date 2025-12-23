@@ -665,7 +665,7 @@ class ChineseAnkiGenerator:
         # Get dictionary definition
         meaning = self.get_dictionary_data(word)
 
-        # --- НОВОЕ: Генерируем мнемонику для составного слова ---
+        # Генерируем мнемонику для составного слова ---
         word_mnemonic = self.get_word_mnemonic_from_gemini(word, meaning)
         # -------------------------------------------------------
 
@@ -685,7 +685,7 @@ class ChineseAnkiGenerator:
         # Получение подсказки по компонентам И МНЕМОНИКЕ (Синхронно)
         component_hint = self.get_hanzi_hint(word) 
         
-        # 💡 ИЗМЕНЕНИЕ: Поле ExampleMeaning теперь содержит только перевод примера, без префикса "Значение примера:"
+        # 💡 Поле ExampleMeaning содержит только перевод примера, без префикса "Значение примера:"
         final_example_meaning = f"{example_meaning}" if example_meaning else ""
         
         # Get audio (SWITCHED TO TTS)
@@ -734,13 +734,13 @@ class ChineseAnkiGenerator:
                 pinyin_text,       # Pinyin
                 colored_pinyin,    # ColoredPinyin
                 meaning,           # Meaning
-                word_mnemonic,     # <--- НОВОЕ ПОЛЕ: WordMnemonic
+                word_mnemonic,     # WordMnemonic
                 example_chinese,   # Example
                 example_colored_pinyin,  # ExamplePinyin
                 final_example_meaning,   # ExampleMeaning (Только перевод примера)
                 component_hint,    # Hint (Подсказка с компонентами и мнемоникой)
                 audio_tag,         # Audio
-                example_audio_tag, # ExampleAudio (Аудио примера) <--- ДОБАВЛЕНО В ПОЛЯ
+                example_audio_tag, # ExampleAudio (Аудио примера)
                 stroke_tag,        # StrokeOrder
             ],
         )
