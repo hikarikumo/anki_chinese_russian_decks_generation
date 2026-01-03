@@ -10,61 +10,28 @@ from datetime import datetime
 from hanziconv import HanziConv
 import json
 import random
-import openai
 import google.generativeai as genai
 from google.api_core import exceptions as google_exceptions
-from openai import OpenAI
-from openai import OpenAIError
-import base64
-import http.client
-import re
 from gtts import gTTS
+
+# import openai
+# from openai import OpenAI
+# from openai import OpenAIError
+# import base64
+# import http.client
+# import re
+
 
 
 input_file = "chinese_words.txt"
-# anki_deck_name = "Vova chinese HSK1"
-# anki_deck_name = "DuChinese chinese HSK1"
-# anki_deck_name = "DuChinese pet store" 
-# anki_deck_name = "DuChinese Butterfly lovers"
-# anki_deck_name = "DuChinese hsk1 dialogues"
-# anki_deck_name = "MandarinBean hsk2"
-# anki_deck_name = "HSK3 trade bargain"
-# anki_deck_name = "HSK3 Standard course"
-# anki_deck_name = "Parks"
-# anki_deck_name = "chinese daily podcast - Why You Still Can’t Speak Chinese?"
-# anki_deck_name = "Roman words"
-# anki_deck_name = "Chinese Pod Newbie"
-# anki_deck_name = "美玲 说话"
 
-# anki_deck_name = "Ян Боровски - частотные слова"
-# output_deck = "vova_chinese_hsk1.apkg"
-# output_deck = "Duchinese_hsk1.apkg"
-# output_deck = "Duchinese_pet_store.apkg"
-# output_deck = "Duchinese_butterfly_lovers.apkg"
-# output_deck = "DuChinese_hsk1_dialogues.apkg"
-# output_deck = "MandarinBean_hsk2.apkg"
-# output_deck = "HSK3_Standard_course.apkg"
-# output_deck = "HSK3_trade_bargain.apkg"
-# output_deck = "2025.08.21.apkg"
-# output_deck = "chinese_daily_podcast_cannot_speak_chinese.apkg"
-# output_deck = "roman_words.apkg"
-# output_deck = "chinese_pod_newbie.apkg"
-# output_deck = "meiling_conversation.apkg"
-# output_deck = "parks.apkg"
+anki_deck_name = "Chinese MandarinBean hsk2"
+output_deck = "Chinese-MandarinBean-hsk2.apkg"
+input_words_archive = "input_words_archive_mandarinbean_hsk2"
 
-# input_words_archive = "input_words_archive_2025.08.21"
-# input_words_archive = "input_words_archive_chinese_daily_podcast"
-# input_words_archive = "input_words_archive_chinese_roman"
-# input_words_archive = "input_words_archive_chinese_pod"
-# input_words_archive = "input_words_archive_meiling"
-# input_words_archive = "input_words_archive_duchinese_pet_store"
-# input_words_archive = "input_words_archive_duchinese_butterfly_lovers"
-# input_words_archive = "input_words_archive_duchinese_hsk1_dialogues"
-# input_words_archive = "input_words_archive_mandarinbean_hsk2"
-
-anki_deck_name = "MandarinBean hsk1"
-output_deck = "MandarinBean_hsk1.apkg"
-input_words_archive = "input_words_archive_mandarinbean_hsk1"
+# anki_deck_name = "MandarinBean hsk1"
+# output_deck = "MandarinBean_hsk1.apkg"
+# input_words_archive = "input_words_archive_mandarinbean_hsk1"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"
