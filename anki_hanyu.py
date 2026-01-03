@@ -31,7 +31,7 @@ input_words_archive = "input_words_archive_mandarinbean_hsk2"
 
 # anki_deck_name = "MandarinBean hsk1"
 # output_deck = "MandarinBean_hsk1.apkg"
-# input_words_archive = "input_words_archive_mandarinbean_hsk1"
+# input_words_archive = "input_words_archive/input_words_archive_mandarinbean_hsk1"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"
@@ -676,6 +676,18 @@ class ChineseAnkiGenerator:
             "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
         }
 
+
+    def get_or_create_archive_path(self):
+        """
+        Returns the path to the archive directory for input words.
+        Creates the directory if it does not exist.
+        """
+        archive_path = input_words_archive
+        if not os.path.exists(archive_path):
+            os.makedirs(archive_path, exist_ok=True)
+        return archive_path
+
+
     def create_deck_from_file(self, input_words, output_file=output_deck):
         """Create Anki deck from Chinese words"""
         results = []
@@ -693,7 +705,8 @@ class ChineseAnkiGenerator:
         print(f"Created Anki deck: {output_file}")
 
         # copy inputs to archive
-        output_file_archive_path = input_words_archive
+        output_file_archive_path = self.get_or_create_archive_path()
+
         output_filename = (
             f'chinese_words_{datetime.now().strftime("%Y-%m-%d_%H_%M_%S")}.txt'
         )

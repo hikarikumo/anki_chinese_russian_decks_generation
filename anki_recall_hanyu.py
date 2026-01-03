@@ -23,8 +23,6 @@ from gtts import gTTS
 
 input_file = "chinese_words.txt"
 
-
-
 anki_deck_name = "recall Chinese MandarinBean hsk2" 
 output_deck = "recall_Chinese_MandarinBean_hsk2.apkg"
 input_words_archive = "input_words_archive_recall_mandarinbean_hsk2"
@@ -33,9 +31,7 @@ input_words_archive = "input_words_archive_recall_mandarinbean_hsk2"
 # output_deck = "recall_MandarinBean_hsk1.apkg"
 # input_words_archive = "input_words_archive_recall_mandarinbean_hsk1"
 
-
 GRAPHICS_PATH = "graphics.txt"
-
 
 # OPENAI_MODEL = "gpt-4o-mini"
 # OPENAI_MODEL = "o3-mini-2025-01-31"
@@ -660,7 +656,6 @@ class ChineseAnkiGenerator:
         if audio_file:
             self.media_files.append(audio_file)
 
-        # --- НОВАЯ ЛОГИКА: Озвучка примера предложения ---
         example_audio_tag = ""
         if example_chinese:
              # Генерируем аудио для всего предложения примера
@@ -718,6 +713,16 @@ class ChineseAnkiGenerator:
             "meaning": meaning[:50] + "..." if len(meaning) > 50 else meaning,
         }
 
+    def get_or_create_archive_path(self):
+        """
+        Returns the path to the archive directory for input words.
+        Creates the directory if it does not exist.
+        """
+        archive_path = input_words_archive
+        if not os.path.exists(archive_path):
+            os.makedirs(archive_path, exist_ok=True)
+        return archive_path    
+
 
     def create_deck_from_file(self, input_words, output_file=output_deck):
         """Create Anki deck from Chinese words"""
@@ -736,7 +741,7 @@ class ChineseAnkiGenerator:
         print(f"Created Anki deck: {output_file}")
 
         # copy inputs to archive
-        output_file_archive_path = input_words_archive
+        output_file_archive_path = self.get_or_create_archive_path()
         output_filename = (
             f'chinese_words_{datetime.now().strftime("%Y-%m-%d_%H_%M_%S")}.txt'
         )
