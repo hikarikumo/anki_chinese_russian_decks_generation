@@ -25,13 +25,13 @@ from gtts import gTTS
 
 input_file = "chinese_words.txt"
 
-anki_deck_name = "Chinese MandarinBean hsk2"
-output_deck = "Chinese-MandarinBean-hsk2.apkg"
-input_words_archive = "input_words_archive_mandarinbean_hsk2"
+# anki_deck_name = "Chinese decks::MandarinBean::Chinese MandarinBean hsk2"
+# output_deck = "Chinese-MandarinBean-hsk2.apkg"
+# input_words_archive = "input_words_archive_mandarinbean_hsk2"
 
-# anki_deck_name = "MandarinBean hsk1"
-# output_deck = "MandarinBean_hsk1.apkg"
-# input_words_archive = "input_words_archive/input_words_archive_mandarinbean_hsk1"
+anki_deck_name = "Chinese decks::MandarinBean::MandarinBean hsk1"
+output_deck = "MandarinBean_hsk1.apkg"
+input_words_archive = "input_words_archive/input_words_archive_mandarinbean_hsk1"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"

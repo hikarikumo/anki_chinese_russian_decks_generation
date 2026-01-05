@@ -23,13 +23,13 @@ from gtts import gTTS
 
 input_file = "chinese_words.txt"
 
-anki_deck_name = "recall Chinese MandarinBean hsk2" 
-output_deck = "recall_Chinese_MandarinBean_hsk2.apkg"
-input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_hsk2"
+# anki_deck_name = "Chinese decks::MandarinBean::recall Chinese MandarinBean hsk2" 
+# output_deck = "recall_Chinese_MandarinBean_hsk2.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_hsk2"
 
-# anki_deck_name = "recall_MandarinBean hsk1"
-# output_deck = "recall_MandarinBean_hsk1.apkg"
-# input_words_archive = "input_words_archive_recall_mandarinbean_hsk1"
+anki_deck_name = "Chinese decks::MandarinBean::recall_MandarinBean hsk1"
+output_deck = "recall_MandarinBean_hsk1.apkg"
+input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_hsk1"
 
 GRAPHICS_PATH = "graphics.txt"
 
