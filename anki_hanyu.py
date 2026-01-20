@@ -27,11 +27,32 @@ input_file = "chinese_words.txt"
 
 # anki_deck_name = "Chinese decks::MandarinBean::Chinese MandarinBean hsk2"
 # output_deck = "Chinese-MandarinBean-hsk2.apkg"
-# input_words_archive = "input_words_archive_mandarinbean_hsk2"
+# input_words_archive = "input_words_archive/input_words_archive_mandarinbean_hsk2"
 
-anki_deck_name = "Chinese decks::MandarinBean::MandarinBean hsk1"
-output_deck = "MandarinBean_hsk1.apkg"
-input_words_archive = "input_words_archive/input_words_archive_mandarinbean_hsk1"
+# anki_deck_name = "Chinese decks::MandarinBean::世界公民 hsk2"
+# output_deck = "世界公民_hsk2.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_mandarinbean_世界公民_hsk2"
+
+# anki_deck_name = "Chinese decks::MandarinBean::我来中国三年了 hsk2"
+# output_deck = "我来中国三年了_hsk2.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_mandarinbean_我来中国三年了_hsk2"
+
+anki_deck_name = "Chinese decks::MandarinBean::我的自行车 hsk2"
+output_deck = "我的自行车_hsk2.apkg"
+input_words_archive = "input_words_archive/input_words_archive_mandarinbean_我的自行车_hsk2"
+
+# anki_deck_name = "Chinese decks::ManManLai::ManManLai hsk1"
+# output_deck = "ManManLai_hsk1.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_manmanlai_hsk1"
+
+
+# anki_deck_name = "Chinese decks::Common::Common hsk1"
+# output_deck = "Common_hsk1.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_common_hsk1"
+
+# anki_deck_name = "Chinese decks::ElenaMakk::SM phrases"
+# output_deck = "ElenaMakk_sm_phrases.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_elena_makk_sm_phrases"
 
 # Path to makemeahanzi graphics.txt (update this to your local path)
 GRAPHICS_PATH = "graphics.txt"

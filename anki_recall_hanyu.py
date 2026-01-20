@@ -27,9 +27,33 @@ input_file = "chinese_words.txt"
 # output_deck = "recall_Chinese_MandarinBean_hsk2.apkg"
 # input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_hsk2"
 
-anki_deck_name = "Chinese decks::MandarinBean::recall_MandarinBean hsk1"
-output_deck = "recall_MandarinBean_hsk1.apkg"
-input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_hsk1"
+# anki_deck_name = "Chinese decks::MandarinBean::recall MandarinBean 世界公民 hsk2"
+# output_deck = "recall_MandarinBean_世界公民_hsk2.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_世界公民_hsk2"
+
+# anki_deck_name = "Chinese decks::MandarinBean::recall 我来中国三年了 hsk2"
+# output_deck = "recall_我来中国三年了_hsk2.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_我来中国三年了_hsk2"
+
+anki_deck_name = "Chinese decks::MandarinBean::recall 我的自行车 hsk2"
+output_deck = "recall_我的自行车_hsk2.apkg"
+input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_我的自行车_hsk2"
+
+# anki_deck_name = "Chinese decks::MandarinBean::recall_MandarinBean hsk1"
+# output_deck = "recall_MandarinBean_hsk1.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_mandarinbean_hsk1"
+
+# anki_deck_name = "Chinese decks::ManManLai::recall_ManManLai hsk1"
+# output_deck = "recall_ManManLai_hsk1.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_manmanlai_hsk1"
+
+# anki_deck_name = "Chinese decks::Common::recall Common hsk1"
+# output_deck = "recall_Common_hsk1.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_common_hsk1"
+
+# anki_deck_name = "Chinese decks::ElenaMakk::recall SM phrases"
+# output_deck = "recall_ElenaMakk_sm_phrases.apkg"
+# input_words_archive = "input_words_archive/input_words_archive_recall_elena_makk_sm_phrases"
 
 GRAPHICS_PATH = "graphics.txt"
 
